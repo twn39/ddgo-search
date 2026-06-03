@@ -28,7 +28,7 @@ The project uses [uv](https://github.com/astral-sh/uv) as its package and enviro
 The repository has a clean, standard Python layout:
 
 ```text
-├── .python-version      # Target Python version (>=3.12)
+├── .python-version      # Target Python version (>=3.11)
 ├── pyproject.toml       # Build metadata, CLI entry points, and dependencies
 ├── uv.lock              # Lockfile for the uv environment manager
 ├── src/
