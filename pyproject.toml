@@ -1,0 +1,28 @@
+[project]
+name = "ddgo-search"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "beautifulsoup4>=4.14.3",
+    "ddgs>=9.14.4",
+    "httpx>=0.28.1",
+    "markdownify>=1.2.2",
+    "rich>=15.0.0",
+    "typer>=0.26.6",
+]
+
+[project.scripts]
+ddgo-search = "ddgo_search.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+]
+
+
