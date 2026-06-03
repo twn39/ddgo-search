@@ -17,6 +17,7 @@ from ddgs.exceptions import DDGSException, TimeoutException
 from rich.console import Console
 
 console = Console()
+err_console = Console(stderr=True)
 
 
 def format_json(results: Any) -> str:
@@ -335,16 +336,14 @@ def execute_with_retry(
             if len(proxies) > 1:
                 proxy_index += 1
                 next_proxy = proxies[proxy_index % len(proxies)]
-                console.print(
+                err_console.print(
                     f"[yellow]Attempt {attempt} failed: {e}. "
                     f"Retrying in {backoff:.2f}s with proxy: {next_proxy}...[/yellow]",
-                    err=True,
                 )
             else:
-                console.print(
+                err_console.print(
                     f"[yellow]Attempt {attempt} failed: {e}. "
                     f"Retrying in {backoff:.2f}s...[/yellow]",
-                    err=True,
                 )
             time.sleep(backoff)
 
@@ -385,8 +384,6 @@ def fetch_url(
     from bs4 import BeautifulSoup
     import markdownify
 
-    proxies_dict = {"all://": proxy} if proxy else None
-
     # Custom headers imitating modern browser headers
     headers = {
         "User-Agent": "ddgo-search/0.1.0 (Direct Fetch; similar to crush/1.0)",
@@ -395,7 +392,7 @@ def fetch_url(
         "Cache-Control": "max-age=0",
     }
 
-    with httpx.Client(proxies=proxies_dict, timeout=timeout, verify=verify, follow_redirects=True) as client:
+    with httpx.Client(proxy=proxy, timeout=timeout, verify=verify, follow_redirects=True) as client:
         response = client.get(url, headers=headers)
         response.raise_for_status()
 

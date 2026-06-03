@@ -23,6 +23,7 @@ app = typer.Typer(
 )
 
 console = Console()
+err_console = Console(stderr=True)
 
 
 class OutputFormat(str, Enum):
@@ -193,7 +194,7 @@ def text(
             return
         display_results(results, "text", format.value)
     except Exception as e:
-        console.print(f"[bold red]Error:[/bold red] {e}", err=True)
+        err_console.print(f"[bold red]Error:[/bold red] {e}")
         raise typer.Exit(code=1)
 
 
@@ -260,7 +261,7 @@ def images(
             return
         display_results(results, "images", format.value)
     except Exception as e:
-        console.print(f"[bold red]Error:[/bold red] {e}", err=True)
+        err_console.print(f"[bold red]Error:[/bold red] {e}")
         raise typer.Exit(code=1)
 
 
@@ -321,7 +322,7 @@ def videos(
             return
         display_results(results, "videos", format.value)
     except Exception as e:
-        console.print(f"[bold red]Error:[/bold red] {e}", err=True)
+        err_console.print(f"[bold red]Error:[/bold red] {e}")
         raise typer.Exit(code=1)
 
 
@@ -366,7 +367,7 @@ def news(
             return
         display_results(results, "news", format.value)
     except Exception as e:
-        console.print(f"[bold red]Error:[/bold red] {e}", err=True)
+        err_console.print(f"[bold red]Error:[/bold red] {e}")
         raise typer.Exit(code=1)
 
 
@@ -401,7 +402,7 @@ def books(
             return
         display_results(results, "books", format.value)
     except Exception as e:
-        console.print(f"[bold red]Error:[/bold red] {e}", err=True)
+        err_console.print(f"[bold red]Error:[/bold red] {e}")
         raise typer.Exit(code=1)
 
 
@@ -461,7 +462,7 @@ def extract(
                 console.print(content_str)
 
     except Exception as e:
-        console.print(f"[bold red]Error:[/bold red] {e}", err=True)
+        err_console.print(f"[bold red]Error:[/bold red] {e}")
         raise typer.Exit(code=1)
 
 
@@ -524,7 +525,7 @@ def fetch(
                 console.print(content_str)
 
     except Exception as e:
-        console.print(f"[bold red]Error:[/bold red] {e}", err=True)
+        err_console.print(f"[bold red]Error:[/bold red] {e}")
         raise typer.Exit(code=1)
 
 
