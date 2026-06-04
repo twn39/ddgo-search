@@ -300,12 +300,12 @@ def parse_proxies(proxy_arg: Optional[str]) -> List[Optional[str]]:
     if os.path.exists(proxy_arg):
         try:
             with open(proxy_arg, "r", encoding="utf-8") as f:
-                lines = [line.strip() for line in f if line.strip()]
+                lines: List[Optional[str]] = [line.strip() for line in f if line.strip()]
                 return lines if lines else [None]
         except Exception:
             pass
 
-    proxies = [p.strip() for p in proxy_arg.split(",") if p.strip()]
+    proxies: List[Optional[str]] = [p.strip() for p in proxy_arg.split(",") if p.strip()]
     return proxies if proxies else [None]
 
 
