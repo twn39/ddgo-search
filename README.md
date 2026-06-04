@@ -107,6 +107,52 @@ uv run ddgo-search fetch "https://example.com" --max-size 5120
 
 ---
 
+## 🤖 Codex Subagent & Skill Integration
+
+You can integrate `ddgo-search` as a custom subagent in Codex to handle all web search and page fetching tasks.
+
+### 1. Global Installation (Recommended)
+
+To allow Codex to automatically call the `ddgo-search` subagent across all your projects:
+
+1. **Install the CLI globally** so it is available from any workspace directory:
+   ```bash
+   pipx install .
+   # Or install into your global python environment
+   pip install .
+   ```
+2. **Install the Skill globally** by copying the skill directory to your user-level Codex skills folder:
+   ```bash
+   mkdir -p ~/.codex/skills/
+   cp -r skills/ddgo-search-skill ~/.codex/skills/
+   ```
+3. **Install the Subagent Configuration globally**:
+   ```bash
+   mkdir -p ~/.codex/agents/
+   cp .codex/agents/ddgo-search.toml ~/.codex/agents/
+   ```
+
+### 2. Project-level Installation
+
+If you only want this subagent available inside this project directory:
+
+1. Ensure the project is trusted in your `~/.codex/config.toml`:
+   ```toml
+   [projects."/absolute/path/to/ddgo-search"]
+   trust_level = "trusted"
+   ```
+2. The local configurations are already set up under:
+   - Skill: [SKILL.md](file:///Users/2342184/programs/ddgs-search/skills/ddgo-search-skill/SKILL.md)
+   - Subagent Config: [.codex/agents/ddgo-search.toml](file:///Users/2342184/programs/ddgs-search/.codex/agents/ddgo-search.toml)
+
+### 3. Usage
+
+Once the skill and subagent are installed globally, Codex can delegate searches automatically when prompted. You can trigger it explicitly by prompting:
+
+> "使用 `ddgo-search` 子智能体帮我查找关于..."
+
+---
+
 ## 🧪 Development & Testing
 
 Run the comprehensive unit test suite:
