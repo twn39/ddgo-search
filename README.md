@@ -20,11 +20,27 @@ A highly resilient, token-efficient, and feature-rich Command Line Interface (CL
 
 ## 🚀 Installation
 
-Install and run using [uv](https://github.com/astral-sh/uv):
+It is recommended to install and manage `ddgo-search` using [uv](https://github.com/astral-sh/uv).
+
+### 1. Global Installation (As a CLI Tool)
+
+To install it globally so that the `ddgo-search` command is available from anywhere:
+
+```bash
+# Install directly from PyPI
+uv tool install ddgo-search
+
+# Or install from GitHub
+uv tool install git+https://github.com/twn39/ddgo-search.git
+```
+
+### 2. Local Development Installation
+
+If you want to clone the repository and run it locally:
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/twn39/ddgo-search.git
 cd ddgo-search
 
 # Install dependencies and sync virtual environment
