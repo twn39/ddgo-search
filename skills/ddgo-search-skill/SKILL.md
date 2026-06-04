@@ -10,16 +10,31 @@ allowed-tools:
 
 `ddgo-search` is a resilient, token-efficient CLI wrapper around the DuckDuckGo Search (`ddgs`) Python library. It provides robust rate-limiting, proxy rotation, webpage extraction, and direct content fetching.
 
+## 📦 Installation
+
+Before using this skill, ensure `ddgo-search` is installed. It is recommended to install it globally using `uv`:
+
+1. **Install `uv`** (if not already installed):
+   - macOS/Linux: `curl -LsSf https://astral.sh/uv/install.sh | sh`
+   - Windows: `powershell -c "irm https://astral.sh/uv/install.ps1 | iex"`
+
+2. **Install `ddgo-search`**:
+   ```bash
+   uv tool install ddgo-search
+   ```
+
 ## 🚀 Quick Start
 
-Run commands using `uv run ddgo-search`:
+Run commands directly (if installed via `uv tool install`) or using `uv run` (if executing inside the project directory):
 
 ```bash
 # Text search (default format is ASCII table)
-uv run ddgo-search text "artificial intelligence"
+ddgo-search text "artificial intelligence"
+# Or: uv run ddgo-search text "artificial intelligence"
 
 # Direct URL fetch and convert to Markdown
-uv run ddgo-search fetch "https://example.com" --format markdown
+ddgo-search fetch "https://example.com" --format markdown
+# Or: uv run ddgo-search fetch "https://example.com" --format markdown
 ```
 
 ---
