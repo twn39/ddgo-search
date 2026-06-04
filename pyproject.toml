@@ -1,9 +1,35 @@
 [project]
 name = "ddgo-search"
 version = "1.0.0"
-description = "Add your description here"
+description = "A resilient, token-efficient CLI wrapper around the DuckDuckGo Search (ddgs) Python library."
 readme = "README.md"
 requires-python = ">=3.11"
+authors = [
+    { name = "twn39" }
+]
+license = { file = "LICENSE" }
+keywords = [
+    "duckduckgo",
+    "ddg",
+    "search-api",
+    "cli",
+    "web-scraping",
+    "llm-agent",
+    "token-efficient"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 dependencies = [
     "beautifulsoup4>=4.14.3",
     "ddgs>=9.14.4",
@@ -12,6 +38,11 @@ dependencies = [
     "rich>=15.0.0",
     "typer>=0.26.6",
 ]
+
+[project.urls]
+Homepage = "https://github.com/twn39/ddgo-search"
+Repository = "https://github.com/twn39/ddgo-search"
+Issues = "https://github.com/twn39/ddgo-search/issues"
 
 [project.scripts]
 ddgo-search = "ddgo_search.cli:app"
@@ -24,5 +55,3 @@ build-backend = "hatchling.build"
 dev = [
     "pytest>=9.0.3",
 ]
-
-

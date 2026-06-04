@@ -1,5 +1,9 @@
 # ddgo-search
 
+[![Tests](https://github.com/twn39/ddgo-search/actions/workflows/tests.yml/badge.svg)](https://github.com/twn39/ddgo-search/actions/workflows/tests.yml)
+[![PyPI version](https://img.shields.io/pypi/v/ddgo-search.svg)](https://pypi.org/project/ddgo-search/)
+[![Python versions](https://img.shields.io/pypi/pyversions/ddgo-search.svg)](https://pypi.org/project/ddgo-search/)
+
 A highly resilient, token-efficient, and feature-rich Command Line Interface (CLI) wrapper around the DuckDuckGo Search (`ddgs`) Python library. It features built-in proxy rotation, rate-limiting, custom token-saving ASCII rendering, webpage extraction, and direct content fetching.
 
 ---
