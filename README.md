@@ -117,9 +117,8 @@ To allow Codex to automatically call the `ddgo-search` subagent across all your 
 
 1. **Install the CLI globally** so it is available from any workspace directory:
    ```bash
-   pipx install .
-   # Or install into your global python environment
-   pip install .
+   # Install globally using uv
+   uv tool install .
    ```
 2. **Install the Skill globally** by copying the skill directory to your user-level Codex skills folder:
    ```bash
