@@ -168,7 +168,7 @@ If you only want this subagent available inside this project directory:
 
 Once the skill and subagent are installed globally, Codex can delegate searches automatically when prompted. You can trigger it explicitly by prompting:
 
-> "使用 `ddgo-search` 子智能体帮我查找关于..."
+> "使用网络查找关于..."
 
 ---
 
