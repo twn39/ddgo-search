@@ -4,7 +4,7 @@ import csv
 import io
 import json
 import sys
-from typing import Any, Dict, List
+from typing import Any, Callable, Dict, List, Tuple
 
 from rich.console import Console
 
@@ -219,31 +219,41 @@ def print_plain_books(results: List[Dict[str, Any]]) -> None:
         console.print(f"URL: [blue]{res.get('url')}[/blue]\n")
 
 
+def print_json(results: List[Any]) -> None:
+    """Print results as JSON."""
+    console.print(format_json(results))
+
+
+def print_csv(results: List[Dict[str, Any]]) -> None:
+    """Print results as CSV."""
+    sys.stdout.write(format_csv(results))
+
+
+FORMATTER_REGISTRY: Dict[Tuple[str, str], Callable[[List[Any]], None]] = {
+    ("text", "plain"): print_plain_text,
+    ("images", "plain"): print_plain_images,
+    ("news", "plain"): print_plain_news,
+    ("videos", "plain"): print_plain_videos,
+    ("books", "plain"): print_plain_books,
+    ("text", "table"): print_table_text,
+    ("images", "table"): print_table_images,
+    ("news", "table"): print_table_news,
+    ("videos", "table"): print_table_videos,
+    ("books", "table"): print_table_books,
+}
+
+
 def display_results(results: List[Dict[str, Any]], category: str, fmt: str) -> None:
-    """Display the results in the requested format."""
+    """Display the results in the requested format using strategy lookup."""
     if fmt == "json":
-        console.print(format_json(results))
-    elif fmt == "csv":
-        sys.stdout.write(format_csv(results))
-    elif fmt == "plain":
-        if category == "text":
-            print_plain_text(results)
-        elif category == "images":
-            print_plain_images(results)
-        elif category == "news":
-            print_plain_news(results)
-        elif category == "videos":
-            print_plain_videos(results)
-        elif category == "books":
-            print_plain_books(results)
-    else:  # "table"
-        if category == "text":
-            print_table_text(results)
-        elif category == "images":
-            print_table_images(results)
-        elif category == "news":
-            print_table_news(results)
-        elif category == "videos":
-            print_table_videos(results)
-        elif category == "books":
-            print_table_books(results)
+        print_json(results)
+        return
+    if fmt == "csv":
+        print_csv(results)
+        return
+
+    formatter = FORMATTER_REGISTRY.get((category, fmt))
+    if not formatter:
+        raise ValueError(f"No formatter registered for category '{category}' and format '{fmt}'")
+
+    formatter(results)
