@@ -85,10 +85,16 @@ def test_proxy_file_parsing_integration(tmp_path: Path) -> None:
     """Test that parse_proxies correctly reads proxy strings and local files."""
     # Write a mock proxy list file
     proxy_file = tmp_path / "proxies.txt"
-    proxy_file.write_text("http://proxy1.example.com:8080\nhttp://proxy2.example.com:8080\n", encoding="utf-8")
+    proxy_file.write_text(
+        "http://proxy1.example.com:8080\nhttp://proxy2.example.com:8080\n",
+        encoding="utf-8",
+    )
 
     proxies = parse_proxies(str(proxy_file))
-    assert proxies == ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"]
+    assert proxies == [
+        "http://proxy1.example.com:8080",
+        "http://proxy2.example.com:8080",
+    ]
 
 
 def test_rate_limiting_integration() -> None:
@@ -112,7 +118,9 @@ def test_rate_limiting_integration() -> None:
 def test_fetch_github_integration() -> None:
     """Test fetching from the real Github repository URL provided by the user."""
     runner = CliRunner()
-    result = runner.invoke(app, ["fetch", "https://github.com/twn39/ddgo-search", "--format", "markdown"])
+    result = runner.invoke(
+        app, ["fetch", "https://github.com/twn39/ddgo-search", "--format", "markdown"]
+    )
 
     assert result.exit_code == 0
     # Github repository page should contain twn39/ddgo-search

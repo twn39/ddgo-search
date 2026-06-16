@@ -242,7 +242,7 @@ def test_extract_command_output_file(
 
 def test_format_simple_table() -> None:
     """Test format_simple_table generates token-saving ASCII table correctly."""
-    from ddgo_search.utils import format_simple_table
+    from ddgo_search.formatting import format_simple_table
 
     headers = ["Name", "Age", "City"]
     rows = [
@@ -266,12 +266,16 @@ def test_fetch_command_markdown(mock_client_class: MagicMock) -> None:
     """Test fetch command converting HTML to markdown."""
     mock_client = MagicMock()
     mock_response = MagicMock()
-    mock_response.text = "<html><body><h1>Hello World</h1><p>Test paragraph.</p></body></html>"
+    mock_response.text = (
+        "<html><body><h1>Hello World</h1><p>Test paragraph.</p></body></html>"
+    )
     mock_response.headers = {"content-type": "text/html; charset=utf-8"}
     mock_client.get.return_value = mock_response
     mock_client_class.return_value.__enter__.return_value = mock_client
 
-    result = runner.invoke(app, ["fetch", "https://example.com", "--format", "markdown"])
+    result = runner.invoke(
+        app, ["fetch", "https://example.com", "--format", "markdown"]
+    )
     assert result.exit_code == 0
     assert "Hello World" in result.stdout
     assert "Test paragraph." in result.stdout
@@ -325,8 +329,92 @@ def test_fetch_command_truncation(mock_client_class: MagicMock) -> None:
     mock_client.get.return_value = mock_response
     mock_client_class.return_value.__enter__.return_value = mock_client
 
-    result = runner.invoke(app, ["fetch", "https://example.com", "--format", "text", "--max-size", "50"])
+    result = runner.invoke(
+        app, ["fetch", "https://example.com", "--format", "text", "--max-size", "50"]
+    )
     assert result.exit_code == 0
     assert "Content truncated to 50 bytes" in result.stdout
     assert len(result.stdout.split("\n")[0]) == 50
 
+
+def test_run_action_success() -> None:
+    """Test _run_action succeeds when the action function returns successfully."""
+    from ddgo_search.cli import _run_action, Config
+
+    mock_ctx = MagicMock()
+    mock_ctx.obj = Config(proxy=None, timeout=10, verify=True, max_retries=1)
+
+    dummy_func = MagicMock(return_value="success_result")
+
+    res = _run_action(mock_ctx, dummy_func)
+    assert res == "success_result"
+    dummy_func.assert_called_once_with(None)
+
+
+def test_run_action_exception() -> None:
+    """Test _run_action exits with code 1 when the action function raises an exception."""
+    from ddgo_search.cli import _run_action, Config
+    import typer
+
+    mock_ctx = MagicMock()
+    mock_ctx.obj = Config(proxy=None, timeout=10, verify=True, max_retries=1)
+
+    dummy_func = MagicMock(side_effect=ValueError("Test Network Error"))
+
+    with pytest.raises(typer.Exit) as exc_info:
+        _run_action(mock_ctx, dummy_func)
+    assert exc_info.value.exit_code == 1
+
+
+@patch("ddgo_search.cli.DDGS")
+@patch("ddgo_search.cli.display_results")
+def test_run_ddgs_search_dynamic_dispatch(
+    mock_display: MagicMock, mock_ddgs_class: MagicMock
+) -> None:
+    """Test _run_ddgs_search resolves method via reflection and processes results."""
+    from ddgo_search.cli import _run_ddgs_search, Config
+
+    mock_ctx = MagicMock()
+    mock_ctx.obj = Config(proxy=None, timeout=10, verify=True, max_retries=1)
+
+    mock_ddgs = MagicMock()
+    mock_ddgs.text.return_value = [{"title": "Dynamic Text"}]
+    mock_ddgs_class.return_value.__enter__.return_value = mock_ddgs
+
+    # Run text query dynamically via reflection
+    _run_ddgs_search(
+        mock_ctx,
+        method_name="text",
+        category="text",
+        fmt="json",
+        query="dynamic query",
+    )
+
+    # Assert correct method was resolved and called
+    mock_ddgs.text.assert_called_once_with(query="dynamic query")
+    # Assert display_results was called with results
+    mock_display.assert_called_once_with([{"title": "Dynamic Text"}], "text", "json")
+
+
+@patch("ddgo_search.cli.DDGS")
+def test_run_ddgs_search_method_not_found(mock_ddgs_class: MagicMock) -> None:
+    """Test _run_ddgs_search exits with code 1 when method_name does not exist on DDGS."""
+    from ddgo_search.cli import _run_ddgs_search, Config
+    from ddgs import DDGS
+    import typer
+
+    mock_ctx = MagicMock()
+    mock_ctx.obj = Config(proxy=None, timeout=10, verify=True, max_retries=1)
+
+    mock_ddgs = MagicMock(spec=DDGS)
+    mock_ddgs_class.return_value.__enter__.return_value = mock_ddgs
+
+    with pytest.raises(typer.Exit) as exc_info:
+        _run_ddgs_search(
+            mock_ctx,
+            method_name="nonexistent",
+            category="text",
+            fmt="json",
+            query="test",
+        )
+    assert exc_info.value.exit_code == 1

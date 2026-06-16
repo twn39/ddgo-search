@@ -2,15 +2,15 @@
 
 from enum import Enum
 from pathlib import Path
-from typing import Optional
+from typing import Any, Callable, Optional
 
 import typer
 from ddgs import DDGS
 from rich.console import Console
 
+from .formatting import display_results
 from .utils import (
     clean_markdown,
-    display_results,
     execute_with_retry,
     fetch_url,
     parse_proxies,
@@ -151,6 +151,65 @@ def main_callback(
     )
 
 
+def _run_action(
+    ctx: typer.Context,
+    action_func: Callable[[Optional[str]], Any],
+) -> Any:
+    """Run an action with retry support, proxy rotation, and uniform error handling."""
+    cfg: Config = ctx.obj
+    proxies = parse_proxies(cfg.proxy)
+    try:
+        return execute_with_retry(action_func, proxies, max_retries=cfg.max_retries)
+    except Exception as e:
+        err_console.print(f"[bold red]Error:[/bold red] {e}")
+        raise typer.Exit(code=1)
+
+
+def _run_ddgs_search(
+    ctx: typer.Context,
+    method_name: str,
+    category: str,
+    fmt: str,
+    *args,
+    **kwargs,
+) -> None:
+    """Execute search queries dynamically via DDGS and format output."""
+    cfg: Config = ctx.obj
+
+    def search_func(proxy: Optional[str]) -> Any:
+        with DDGS(proxy=proxy, timeout=cfg.timeout, verify=cfg.verify) as ddgs:
+            method = getattr(ddgs, method_name)
+            return method(*args, **kwargs)
+
+    results = _run_action(ctx, search_func)
+    if not results:
+        console.print("[yellow]No results found.[/yellow]")
+        return
+    display_results(results, category, fmt)
+
+
+def _handle_content_output(
+    content: str,
+    output: Optional[Path],
+    is_markdown: bool,
+    action_name: str,
+) -> None:
+    """Handle file saving or rendering markdown/plain text on stdout."""
+    if output:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(content, encoding="utf-8")
+        console.print(
+            f"[bold green]Successfully saved {action_name} to {output}[/bold green]"
+        )
+    else:
+        if is_markdown:
+            from rich.markdown import Markdown
+
+            console.print(Markdown(content))
+        else:
+            console.print(content)
+
+
 @app.command()
 def text(
     ctx: typer.Context,
@@ -172,30 +231,19 @@ def text(
     ),
 ) -> None:
     """Perform a text search across multiple search engines with auto-retries."""
-    cfg: Config = ctx.obj
-    proxies = parse_proxies(cfg.proxy)
-
-    def search_func(proxy: Optional[str]) -> list:
-        with DDGS(proxy=proxy, timeout=cfg.timeout, verify=cfg.verify) as ddgs:
-            return ddgs.text(
-                query=query,
-                region=region,
-                safesearch=safesearch.value,
-                timelimit=timelimit,
-                max_results=max_results,
-                page=page,
-                backend=backend,
-            )
-
-    try:
-        results = execute_with_retry(search_func, proxies, max_retries=cfg.max_retries)
-        if not results:
-            console.print("[yellow]No results found.[/yellow]")
-            return
-        display_results(results, "text", format.value)
-    except Exception as e:
-        err_console.print(f"[bold red]Error:[/bold red] {e}")
-        raise typer.Exit(code=1)
+    _run_ddgs_search(
+        ctx,
+        method_name="text",
+        category="text",
+        fmt=format.value,
+        query=query,
+        region=region,
+        safesearch=safesearch.value,
+        timelimit=timelimit,
+        max_results=max_results,
+        page=page,
+        backend=backend,
+    )
 
 
 @app.command()
@@ -226,9 +274,6 @@ def images(
     ),
 ) -> None:
     """Perform an image search with auto-retries and proxy rotation."""
-    cfg: Config = ctx.obj
-    proxies = parse_proxies(cfg.proxy)
-
     kwargs = {}
     if size:
         kwargs["size"] = size.value
@@ -241,28 +286,20 @@ def images(
     if license_image:
         kwargs["license_image"] = license_image
 
-    def search_func(proxy: Optional[str]) -> list:
-        with DDGS(proxy=proxy, timeout=cfg.timeout, verify=cfg.verify) as ddgs:
-            return ddgs.images(
-                query=query,
-                region=region,
-                safesearch=safesearch.value,
-                timelimit=timelimit,
-                max_results=max_results,
-                page=page,
-                backend=backend,
-                **kwargs,
-            )
-
-    try:
-        results = execute_with_retry(search_func, proxies, max_retries=cfg.max_retries)
-        if not results:
-            console.print("[yellow]No results found.[/yellow]")
-            return
-        display_results(results, "images", format.value)
-    except Exception as e:
-        err_console.print(f"[bold red]Error:[/bold red] {e}")
-        raise typer.Exit(code=1)
+    _run_ddgs_search(
+        ctx,
+        method_name="images",
+        category="images",
+        fmt=format.value,
+        query=query,
+        region=region,
+        safesearch=safesearch.value,
+        timelimit=timelimit,
+        max_results=max_results,
+        page=page,
+        backend=backend,
+        **kwargs,
+    )
 
 
 @app.command()
@@ -291,9 +328,6 @@ def videos(
     ),
 ) -> None:
     """Perform a video search with auto-retries and proxy rotation."""
-    cfg: Config = ctx.obj
-    proxies = parse_proxies(cfg.proxy)
-
     kwargs = {}
     if resolution:
         kwargs["resolution"] = resolution.value
@@ -302,28 +336,20 @@ def videos(
     if license_videos:
         kwargs["license_videos"] = license_videos
 
-    def search_func(proxy: Optional[str]) -> list:
-        with DDGS(proxy=proxy, timeout=cfg.timeout, verify=cfg.verify) as ddgs:
-            return ddgs.videos(
-                query=query,
-                region=region,
-                safesearch=safesearch.value,
-                timelimit=timelimit,
-                max_results=max_results,
-                page=page,
-                backend=backend,
-                **kwargs,
-            )
-
-    try:
-        results = execute_with_retry(search_func, proxies, max_retries=cfg.max_retries)
-        if not results:
-            console.print("[yellow]No results found.[/yellow]")
-            return
-        display_results(results, "videos", format.value)
-    except Exception as e:
-        err_console.print(f"[bold red]Error:[/bold red] {e}")
-        raise typer.Exit(code=1)
+    _run_ddgs_search(
+        ctx,
+        method_name="videos",
+        category="videos",
+        fmt=format.value,
+        query=query,
+        region=region,
+        safesearch=safesearch.value,
+        timelimit=timelimit,
+        max_results=max_results,
+        page=page,
+        backend=backend,
+        **kwargs,
+    )
 
 
 @app.command()
@@ -345,30 +371,19 @@ def news(
     ),
 ) -> None:
     """Perform a news search with auto-retries and proxy rotation."""
-    cfg: Config = ctx.obj
-    proxies = parse_proxies(cfg.proxy)
-
-    def search_func(proxy: Optional[str]) -> list:
-        with DDGS(proxy=proxy, timeout=cfg.timeout, verify=cfg.verify) as ddgs:
-            return ddgs.news(
-                query=query,
-                region=region,
-                safesearch=safesearch.value,
-                timelimit=timelimit,
-                max_results=max_results,
-                page=page,
-                backend=backend,
-            )
-
-    try:
-        results = execute_with_retry(search_func, proxies, max_retries=cfg.max_retries)
-        if not results:
-            console.print("[yellow]No results found.[/yellow]")
-            return
-        display_results(results, "news", format.value)
-    except Exception as e:
-        err_console.print(f"[bold red]Error:[/bold red] {e}")
-        raise typer.Exit(code=1)
+    _run_ddgs_search(
+        ctx,
+        method_name="news",
+        category="news",
+        fmt=format.value,
+        query=query,
+        region=region,
+        safesearch=safesearch.value,
+        timelimit=timelimit,
+        max_results=max_results,
+        page=page,
+        backend=backend,
+    )
 
 
 @app.command()
@@ -383,27 +398,16 @@ def books(
     ),
 ) -> None:
     """Perform a book search with auto-retries and proxy rotation."""
-    cfg: Config = ctx.obj
-    proxies = parse_proxies(cfg.proxy)
-
-    def search_func(proxy: Optional[str]) -> list:
-        with DDGS(proxy=proxy, timeout=cfg.timeout, verify=cfg.verify) as ddgs:
-            return ddgs.books(
-                query=query,
-                max_results=max_results,
-                page=page,
-                backend=backend,
-            )
-
-    try:
-        results = execute_with_retry(search_func, proxies, max_retries=cfg.max_retries)
-        if not results:
-            console.print("[yellow]No results found.[/yellow]")
-            return
-        display_results(results, "books", format.value)
-    except Exception as e:
-        err_console.print(f"[bold red]Error:[/bold red] {e}")
-        raise typer.Exit(code=1)
+    _run_ddgs_search(
+        ctx,
+        method_name="books",
+        category="books",
+        fmt=format.value,
+        query=query,
+        max_results=max_results,
+        page=page,
+        backend=backend,
+    )
 
 
 @app.command()
@@ -424,46 +428,31 @@ def extract(
     ),
 ) -> None:
     """Fetch a URL and extract its main content with auto-retries and proxy rotation."""
-    cfg: Config = ctx.obj
-    proxies = parse_proxies(cfg.proxy)
 
     def extract_func(proxy: Optional[str]) -> dict:
-        with DDGS(proxy=proxy, timeout=cfg.timeout, verify=cfg.verify) as ddgs:
+        with DDGS(proxy=proxy, timeout=ctx.obj.timeout, verify=ctx.obj.verify) as ddgs:
             return ddgs.extract(url=url, fmt=fmt.value)
 
-    try:
-        result = execute_with_retry(extract_func, proxies, max_retries=cfg.max_retries)
-        content = result.get("content", "")
+    result = _run_action(ctx, extract_func)
+    content = result.get("content", "")
 
-        # If bytes, decode or handle appropriately
-        if isinstance(content, bytes):
-            try:
-                content_str = content.decode("utf-8")
-            except UnicodeDecodeError:
-                content_str = str(content)
-        else:
-            content_str = content
+    # If bytes, decode or handle appropriately
+    if isinstance(content, bytes):
+        try:
+            content_str = content.decode("utf-8")
+        except UnicodeDecodeError:
+            content_str = str(content)
+    else:
+        content_str = content
 
-        # Apply robust markdown cleaning/anti-bloat formatting
-        content_str = clean_markdown(content_str)
-
-        if output:
-            output.parent.mkdir(parents=True, exist_ok=True)
-            output.write_text(content_str, encoding="utf-8")
-            console.print(
-                f"[bold green]Successfully saved content to {output}[/bold green]"
-            )
-        else:
-            if fmt == ExtractFormat.MARKDOWN:
-                from rich.markdown import Markdown
-
-                console.print(Markdown(content_str))
-            else:
-                console.print(content_str)
-
-    except Exception as e:
-        err_console.print(f"[bold red]Error:[/bold red] {e}")
-        raise typer.Exit(code=1)
+    # Apply robust markdown cleaning/anti-bloat formatting
+    content_str = clean_markdown(content_str)
+    _handle_content_output(
+        content_str,
+        output,
+        is_markdown=(fmt == ExtractFormat.MARKDOWN),
+        action_name="content",
+    )
 
 
 @app.command()
@@ -490,43 +479,29 @@ def fetch(
     ),
 ) -> None:
     """Directly fetch a URL using httpx and convert its HTML content to markdown, text, or keep html."""
-    cfg: Config = ctx.obj
-    proxies = parse_proxies(cfg.proxy)
 
     def fetch_func(proxy: Optional[str]) -> str:
         return fetch_url(
             url=url,
             fmt=fmt.value,
-            timeout=float(cfg.timeout),
-            verify=cfg.verify,
+            timeout=float(ctx.obj.timeout),
+            verify=ctx.obj.verify,
             proxy=proxy,
             max_size=max_size,
         )
 
-    try:
-        content_str = execute_with_retry(fetch_func, proxies, max_retries=cfg.max_retries)
+    content_str = _run_action(ctx, fetch_func)
 
-        # Apply robust cleaning if format is markdown
-        if fmt == FetchFormat.MARKDOWN:
-            content_str = clean_markdown(content_str)
+    # Apply robust cleaning if format is markdown
+    if fmt == FetchFormat.MARKDOWN:
+        content_str = clean_markdown(content_str)
 
-        if output:
-            output.parent.mkdir(parents=True, exist_ok=True)
-            output.write_text(content_str, encoding="utf-8")
-            console.print(
-                f"[bold green]Successfully saved fetched content to {output}[/bold green]"
-            )
-        else:
-            if fmt == FetchFormat.MARKDOWN:
-                from rich.markdown import Markdown
-
-                console.print(Markdown(content_str))
-            else:
-                console.print(content_str)
-
-    except Exception as e:
-        err_console.print(f"[bold red]Error:[/bold red] {e}")
-        raise typer.Exit(code=1)
+    _handle_content_output(
+        content_str,
+        output,
+        is_markdown=(fmt == FetchFormat.MARKDOWN),
+        action_name="fetched content",
+    )
 
 
 if __name__ == "__main__":
