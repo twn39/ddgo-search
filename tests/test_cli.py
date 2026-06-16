@@ -379,12 +379,179 @@ def test_execute_search_type_safe(mock_ddgs_class: MagicMock) -> None:
     mock_ddgs_class.return_value.__enter__.return_value = mock_ddgs
 
     # Call _execute_search using a type-safe lambda closure
-    res = _execute_search(
-        mock_ctx,
-        lambda ddgs: ddgs.text(query="test query")
-    )
+    res = _execute_search(mock_ctx, lambda ddgs: ddgs.text(query="test query"))
 
     # Verify result and call logic
     assert res == [{"title": "Type Safe Text"}]
     mock_ddgs.text.assert_called_once_with(query="test query")
 
+
+@patch("pathlib.Path.expanduser")
+@patch("pathlib.Path.cwd")
+def test_skills_install_local(
+    mock_cwd: MagicMock, mock_expanduser: MagicMock, tmp_path: Path
+) -> None:
+    """Test installing skills locally (project level)."""
+    mock_cwd.return_value = tmp_path / "project"
+    mock_expanduser.return_value = tmp_path / "home"
+
+    result = runner.invoke(app, ["skills", "install", "--local"])
+    assert result.exit_code == 0
+    assert "Installed Codex Skill" in result.stdout
+
+    # Codex
+    assert (
+        tmp_path / "project" / ".codex" / "skills" / "ddgo-search-skill" / "SKILL.md"
+    ).exists()
+    assert not (
+        tmp_path / "project" / ".codex" / "agents" / "ddgo-search.toml"
+    ).exists()
+
+    # Antigravity
+    assert (
+        tmp_path / "project" / ".agents" / "skills" / "ddgo-search-skill" / "SKILL.md"
+    ).exists()
+    assert not (
+        tmp_path / "project" / ".agents" / "agents" / "ddgo-search.toml"
+    ).exists()
+
+    # Crush
+    assert (
+        tmp_path / "project" / ".crush" / "skills" / "ddgo-search-skill" / "SKILL.md"
+    ).exists()
+
+    # Claude Code
+    assert (
+        tmp_path / "project" / ".claude" / "skills" / "ddgo-search-skill" / "SKILL.md"
+    ).exists()
+
+
+@patch("pathlib.Path.expanduser")
+@patch("pathlib.Path.cwd")
+def test_skills_install_global(
+    mock_cwd: MagicMock, mock_expanduser: MagicMock, tmp_path: Path
+) -> None:
+    """Test installing skills globally (user level)."""
+    mock_cwd.return_value = tmp_path / "project"
+    mock_expanduser.return_value = tmp_path / "home"
+
+    result = runner.invoke(app, ["skills", "install", "--global"])
+    assert result.exit_code == 0
+    assert "Installed Codex Skill" in result.stdout
+
+    # Codex
+    assert (
+        tmp_path / "home" / ".codex" / "skills" / "ddgo-search-skill" / "SKILL.md"
+    ).exists()
+    assert not (tmp_path / "home" / ".codex" / "agents" / "ddgo-search.toml").exists()
+
+    # Antigravity
+    assert (
+        tmp_path
+        / "home"
+        / ".gemini"
+        / "config"
+        / "skills"
+        / "ddgo-search-skill"
+        / "SKILL.md"
+    ).exists()
+    assert not (
+        tmp_path / "home" / ".gemini" / "config" / "agents" / "ddgo-search.toml"
+    ).exists()
+
+    # Crush
+    assert (
+        tmp_path
+        / "home"
+        / ".config"
+        / "crush"
+        / "skills"
+        / "ddgo-search-skill"
+        / "SKILL.md"
+    ).exists()
+    assert (
+        tmp_path
+        / "home"
+        / ".config"
+        / "agents"
+        / "skills"
+        / "ddgo-search-skill"
+        / "SKILL.md"
+    ).exists()
+    assert (
+        tmp_path / "home" / ".agents" / "skills" / "ddgo-search-skill" / "SKILL.md"
+    ).exists()
+
+    # Claude Code
+    assert (
+        tmp_path / "home" / ".claude" / "skills" / "ddgo-search-skill" / "SKILL.md"
+    ).exists()
+
+
+@patch("pathlib.Path.expanduser")
+@patch("pathlib.Path.cwd")
+def test_skills_install_target_specific(
+    mock_cwd: MagicMock, mock_expanduser: MagicMock, tmp_path: Path
+) -> None:
+    """Test targeting a specific CLI agent for skills (e.g. crush)."""
+    mock_cwd.return_value = tmp_path / "project"
+    mock_expanduser.return_value = tmp_path / "home"
+
+    result = runner.invoke(app, ["skills", "install", "--local", "--target", "crush"])
+    assert result.exit_code == 0
+
+    # Crush should be installed
+    assert (
+        tmp_path / "project" / ".crush" / "skills" / "ddgo-search-skill" / "SKILL.md"
+    ).exists()
+
+    # Codex should NOT be installed
+    assert not (tmp_path / "project" / ".codex").exists()
+
+
+def test_skills_install_invalid_target() -> None:
+    """Test providing an invalid target agent for skills."""
+    result = runner.invoke(app, ["skills", "install", "--target", "invalid_agent"])
+    assert result.exit_code == 1
+
+
+@patch("pathlib.Path.expanduser")
+@patch("pathlib.Path.cwd")
+def test_agents_install_local(
+    mock_cwd: MagicMock, mock_expanduser: MagicMock, tmp_path: Path
+) -> None:
+    """Test installing agents locally (project level) for Codex."""
+    mock_cwd.return_value = tmp_path / "project"
+    mock_expanduser.return_value = tmp_path / "home"
+
+    result = runner.invoke(app, ["agents", "install", "--local"])
+    assert result.exit_code == 0
+    assert "Installed Codex Agent configuration" in result.stdout
+
+    # Codex Agent should exist
+    assert (tmp_path / "project" / ".codex" / "agents" / "ddgo-search.toml").exists()
+    # Codex Skill should NOT be created by this command
+    assert not (tmp_path / "project" / ".codex" / "skills").exists()
+
+
+@patch("pathlib.Path.expanduser")
+@patch("pathlib.Path.cwd")
+def test_agents_install_global(
+    mock_cwd: MagicMock, mock_expanduser: MagicMock, tmp_path: Path
+) -> None:
+    """Test installing agents globally (user level) for Codex."""
+    mock_cwd.return_value = tmp_path / "project"
+    mock_expanduser.return_value = tmp_path / "home"
+
+    result = runner.invoke(app, ["agents", "install", "--global", "--target", "codex"])
+    assert result.exit_code == 0
+    assert "Installed Codex Agent configuration" in result.stdout
+
+    # Codex Agent should exist globally
+    assert (tmp_path / "home" / ".codex" / "agents" / "ddgo-search.toml").exists()
+
+
+def test_agents_install_invalid_target() -> None:
+    """Test providing an invalid target agent for agents installation (e.g. crush, which isn't supported)."""
+    result = runner.invoke(app, ["agents", "install", "--target", "crush"])
+    assert result.exit_code == 1

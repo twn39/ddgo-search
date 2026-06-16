@@ -129,7 +129,7 @@ uv run ddgo-search fetch "https://example.com" --max-size 5120
 
 ## 🤖 Codex Subagent & Skill Integration
 
-You can integrate `ddgo-search` as a custom subagent in Codex to handle all web search and page fetching tasks.
+You can integrate `ddgo-search` as a custom subagent and skill in Codex (or other supported agents like Antigravity, Crush, and Claude Code) to handle all web search and page fetching tasks.
 
 ### 1. Global Installation (Recommended)
 
@@ -140,29 +140,35 @@ To allow Codex to automatically call the `ddgo-search` subagent across all your 
    # Install globally using uv
    uv tool install .
    ```
-2. **Install the Skill globally** by copying the skill directory to your user-level Codex skills folder:
+2. **Install the Skills and Subagent Configurations** using the CLI installer:
    ```bash
-   mkdir -p ~/.codex/skills/
-   cp -r skills/ddgo-search-skill ~/.codex/skills/
-   ```
-3. **Install the Subagent Configuration globally**:
-   ```bash
-   mkdir -p ~/.codex/agents/
-   cp .codex/agents/ddgo-search.toml ~/.codex/agents/
+   # Install skills globally (for Codex, Antigravity, Crush, and Claude Code)
+   ddgo-search skills install
+
+   # Install the subagent configuration globally (for Codex)
+   ddgo-search agents install --target codex
    ```
 
 ### 2. Project-level Installation
 
-If you only want this subagent available inside this project directory:
+If you only want this subagent and skill available inside this project directory:
 
 1. Ensure the project is trusted in your `~/.codex/config.toml`:
    ```toml
    [projects."/absolute/path/to/ddgo-search"]
    trust_level = "trusted"
    ```
-2. The local configurations are already set up under:
-   - Skill: [SKILL.md](file:///Users/2342184/programs/ddgs-search/skills/ddgo-search-skill/SKILL.md)
-   - Subagent Config: [.codex/agents/ddgo-search.toml](file:///Users/2342184/programs/ddgs-search/.codex/agents/ddgo-search.toml)
+2. Install the skills and agents locally:
+   ```bash
+   # Install skills locally
+   ddgo-search skills install --local
+
+   # Install the subagent configuration locally
+   ddgo-search agents install --target codex --local
+   ```
+3. The packaged configurations are located at:
+   - Skill: [SKILL.md](file:///Users/2342184/programs/ddgs-search/src/ddgo_search/resources/skills/ddgo-search-skill/SKILL.md)
+   - Subagent Config: [ddgo-search.toml](file:///Users/2342184/programs/ddgs-search/src/ddgo_search/resources/agents/ddgo-search.toml)
 
 ### 3. Usage
 

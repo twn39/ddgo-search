@@ -23,6 +23,15 @@ Before using this skill, ensure `ddgo-search` is installed. It is recommended to
    uv tool install ddgo-search
    ```
 
+3. **Install the Skills and Agent configurations**:
+   ```bash
+   # Install the skills (for Codex, Antigravity, Crush, and Claude Code)
+   ddgo-search skills install
+
+   # Install the agent configurations (for Codex)
+   ddgo-search agents install --target codex
+   ```
+
 ## 🚀 Quick Start
 
 Run commands directly (if installed via `uv tool install`) or using `uv run` (if executing inside the project directory):
@@ -50,7 +59,7 @@ Pass global options *before* the subcommand:
 
 Example:
 ```bash
-uv run ddgo-search -p "http://proxy.example.com:8080" -t 15 text "latest technology"
+ddgo-search -p "http://proxy.example.com:8080" -t 15 text "latest technology"
 ```
 
 ### Subcommands
@@ -58,7 +67,7 @@ uv run ddgo-search -p "http://proxy.example.com:8080" -t 15 text "latest technol
 #### 1. Text Search (`text`)
 Search the web for text results.
 ```bash
-uv run ddgo-search text "python programming" [OPTIONS]
+ddgo-search text "python programming" [OPTIONS]
 ```
 - `--max-results INTEGER`: Maximum results to return (default: `10`).
 - `--timelimit [d|w|m|y]`: Limit results to day, week, month, or year.
@@ -67,7 +76,7 @@ uv run ddgo-search text "python programming" [OPTIONS]
 #### 2. Image Search (`images`)
 Search for images.
 ```bash
-uv run ddgo-search images "space nebula" [OPTIONS]
+ddgo-search images "space nebula" [OPTIONS]
 ```
 - `--size [Small|Medium|Large|Wallpaper]`
 - `--color [color|Monochrome|red|green|etc.]`
@@ -79,7 +88,7 @@ uv run ddgo-search images "space nebula" [OPTIONS]
 #### 3. Video Search (`videos`)
 Search for videos.
 ```bash
-uv run ddgo-search videos "rust tutorial" [OPTIONS]
+ddgo-search videos "rust tutorial" [OPTIONS]
 ```
 - `--resolution [high|standard]`
 - `--duration [short|medium|long]`
@@ -91,7 +100,7 @@ uv run ddgo-search videos "rust tutorial" [OPTIONS]
 #### 4. News Search (`news`)
 Query recent news.
 ```bash
-uv run ddgo-search news "climate change" [OPTIONS]
+ddgo-search news "climate change" [OPTIONS]
 ```
 - `--timelimit [d|w|m]`
 - `-f, --format [table|plain|json|csv]` (default: `table`).
@@ -99,7 +108,7 @@ uv run ddgo-search news "climate change" [OPTIONS]
 #### 5. Book Search (`books`)
 Search DuckDuckGo books.
 ```bash
-uv run ddgo-search books "machine learning" [OPTIONS]
+ddgo-search books "machine learning" [OPTIONS]
 ```
 - `--max-results INTEGER`: (default: `10`).
 - `-f, --format [table|plain|json|csv]` (default: `table`).
@@ -107,7 +116,7 @@ uv run ddgo-search books "machine learning" [OPTIONS]
 #### 6. Web Page Extract (`extract`)
 Extract main content using DuckDuckGo's internal extraction backend.
 ```bash
-uv run ddgo-search extract "https://example.com" [OPTIONS]
+ddgo-search extract "https://example.com" [OPTIONS]
 ```
 - `-f, --format [text_markdown|text_plain|text_rich|text]` (default: `text_markdown`).
 - `-o, --output PATH`: Save extracted content to file instead of printing.
@@ -115,7 +124,7 @@ uv run ddgo-search extract "https://example.com" [OPTIONS]
 #### 7. Direct Web Page Fetch (`fetch`)
 Directly fetch a URL using `httpx` and convert its HTML content to Markdown, clean text, or raw HTML. **This is highly recommended for scraping specific pages bypasses DDG's extract servers.**
 ```bash
-uv run ddgo-search fetch "https://example.com" [OPTIONS]
+ddgo-search fetch "https://example.com" [OPTIONS]
 ```
 - `-f, --format [markdown|text|html]` (default: `markdown`).
 - `-s, --max-size INTEGER`: Maximum content size in bytes before truncation to preserve tokens (default: `102400` / 100KB).
@@ -136,8 +145,8 @@ uv run ddgo-search fetch "https://example.com" [OPTIONS]
 3. **Proxy Rotation**:
    - For high-volume searching, always supply a list of proxies:
      ```bash
-     uv run ddgo-search -p "proxy1,proxy2,proxy3" text "query"
+     ddgo-search -p "proxy1,proxy2,proxy3" text "query"
      # Or point to a file containing proxies (one per line)
-     uv run ddgo-search -p "proxies.txt" text "query"
+     ddgo-search -p "proxies.txt" text "query"
      ```
    - The CLI rotates to the next proxy server automatically on failure.

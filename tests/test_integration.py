@@ -6,13 +6,43 @@ import os
 import tempfile
 import threading
 import time
+import urllib.request
 from pathlib import Path
 from typing import Generator
+
 import pytest
 from typer.testing import CliRunner
 
-from ddgo_search.cli import app
-from ddgo_search.utils import ensure_rate_limit, parse_proxies
+# Mock getproxies to return empty dict (disables macOS system configuration proxy settings)
+urllib.request.getproxies = lambda: {}
+
+from ddgo_search.cli import app  # noqa: E402
+from ddgo_search.utils import ensure_rate_limit, parse_proxies  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def clean_env_proxies(monkeypatch) -> Generator[None, None, None]:
+    """Ensure proxy environment variables and system settings do not interfere with local integration tests."""
+    import urllib.request
+
+    monkeypatch.setattr(urllib.request, "getproxies", lambda: {})
+
+    old_env = {}
+    proxy_vars = [
+        "http_proxy",
+        "https_proxy",
+        "all_proxy",
+        "HTTP_PROXY",
+        "HTTPS_PROXY",
+        "ALL_PROXY",
+    ]
+    for var in proxy_vars:
+        if var in os.environ:
+            old_env[var] = os.environ[var]
+            del os.environ[var]
+    yield
+    for var, val in old_env.items():
+        os.environ[var] = val
 
 
 class MockHTMLHandler(http.server.BaseHTTPRequestHandler):
