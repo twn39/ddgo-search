@@ -26,12 +26,12 @@ def test_help() -> None:
     assert "DuckDuckGo Search" in result.stdout
 
 
-@patch("ddgo_search.cli.DDGS")
+@patch("ddgo_search.cli.DDGSAdapter")
 def test_text_command(mock_ddgs_class: MagicMock) -> None:
     """Test standard text search command."""
     mock_ddgs = MagicMock()
     mock_ddgs.text.return_value = [
-        {"title": "Test Text Title", "href": "https://test.com", "body": "Test Body"}
+        {"title": "Test Text Title", "url": "https://test.com", "body": "Test Body"}
     ]
     mock_ddgs_class.return_value.__enter__.return_value = mock_ddgs
 
@@ -49,14 +49,14 @@ def test_text_command(mock_ddgs_class: MagicMock) -> None:
     )
 
 
-@patch("ddgo_search.cli.DDGS")
+@patch("ddgo_search.cli.DDGSAdapter")
 def test_images_command(mock_ddgs_class: MagicMock) -> None:
     """Test images search command."""
     mock_ddgs = MagicMock()
     mock_ddgs.images.return_value = [
         {
             "title": "Test Image Title",
-            "image": "https://test.com/img.jpg",
+            "url": "https://test.com/img.jpg",
             "source": "Test Source",
             "width": 800,
             "height": 600,
@@ -99,7 +99,7 @@ def test_images_command(mock_ddgs_class: MagicMock) -> None:
     )
 
 
-@patch("ddgo_search.cli.DDGS")
+@patch("ddgo_search.cli.DDGSAdapter")
 def test_videos_command(mock_ddgs_class: MagicMock) -> None:
     """Test videos search command."""
     mock_ddgs = MagicMock()
@@ -109,7 +109,7 @@ def test_videos_command(mock_ddgs_class: MagicMock) -> None:
             "duration": "10:00",
             "publisher": "YouTube",
             "published": "2026-01-01",
-            "embed_url": "https://youtube.com/embed/123",
+            "url": "https://youtube.com/embed/123",
         }
     ]
     mock_ddgs_class.return_value.__enter__.return_value = mock_ddgs
@@ -145,7 +145,7 @@ def test_videos_command(mock_ddgs_class: MagicMock) -> None:
     )
 
 
-@patch("ddgo_search.cli.DDGS")
+@patch("ddgo_search.cli.DDGSAdapter")
 def test_news_command(mock_ddgs_class: MagicMock) -> None:
     """Test news search command."""
     mock_ddgs = MagicMock()
@@ -174,7 +174,7 @@ def test_news_command(mock_ddgs_class: MagicMock) -> None:
     )
 
 
-@patch("ddgo_search.cli.DDGS")
+@patch("ddgo_search.cli.DDGSAdapter")
 def test_books_command(mock_ddgs_class: MagicMock) -> None:
     """Test books search command."""
     mock_ddgs = MagicMock()
@@ -200,7 +200,7 @@ def test_books_command(mock_ddgs_class: MagicMock) -> None:
     )
 
 
-@patch("ddgo_search.cli.DDGS")
+@patch("ddgo_search.cli.DDGSAdapter")
 def test_extract_command(mock_ddgs_class: MagicMock) -> None:
     """Test extract content command."""
     mock_ddgs = MagicMock()
@@ -215,11 +215,11 @@ def test_extract_command(mock_ddgs_class: MagicMock) -> None:
     assert "Extracted Markdown Content" in result.stdout
     mock_ddgs.extract.assert_called_once_with(
         url="https://example.com",
-        fmt="text_markdown",
+        fmt="markdown",
     )
 
 
-@patch("ddgo_search.cli.DDGS")
+@patch("ddgo_search.cli.DDGSAdapter")
 def test_extract_command_output_file(
     mock_ddgs_class: MagicMock, tmp_path: Path
 ) -> None:
@@ -366,7 +366,7 @@ def test_run_action_exception() -> None:
     assert exc_info.value.exit_code == 1
 
 
-@patch("ddgo_search.cli.DDGS")
+@patch("ddgo_search.cli.DDGSAdapter")
 def test_execute_search_type_safe(mock_ddgs_class: MagicMock) -> None:
     """Test _execute_search invokes the provided search closure with type safety."""
     from ddgo_search.cli import _execute_search, Config
@@ -379,7 +379,7 @@ def test_execute_search_type_safe(mock_ddgs_class: MagicMock) -> None:
     mock_ddgs_class.return_value.__enter__.return_value = mock_ddgs
 
     # Call _execute_search using a type-safe lambda closure
-    res = _execute_search(mock_ctx, lambda ddgs: ddgs.text(query="test query"))
+    res = _execute_search(mock_ctx, lambda adapter: adapter.text(query="test query"))
 
     # Verify result and call logic
     assert res == [{"title": "Type Safe Text"}]

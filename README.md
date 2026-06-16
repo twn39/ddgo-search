@@ -89,7 +89,7 @@ Search for videos with specific duration, resolution, or license filters.
 ```bash
 uv run ddgo-search videos "golang tutorial" --resolution high --duration short
 ```
-*Note: The third-party library standard resolution uses the spelling `"standart"`. The CLI enum automatically handles this mapping.*
+*Note: The CLI standard resolution parameter accepts standard English spelling `"standard"`. The underlying adapter layer automatically maps this to the third-party library's expected `"standart"` spelling.*
 
 #### 4. News Search (`news`)
 Query recent news.
@@ -106,7 +106,7 @@ uv run ddgo-search books "machine learning" --max-results 10
 #### 6. Web Page Extract (`extract`)
 Fetch and extract webpage content using DuckDuckGo's internal extraction backend.
 ```bash
-uv run ddgo-search extract "https://example.com" --format text_markdown
+uv run ddgo-search extract "https://example.com" --format markdown
 ```
 
 #### 7. Direct Web Page Fetch (`fetch`)
@@ -186,4 +186,4 @@ Run the comprehensive unit test suite:
 uv run pytest
 ```
 
-Our tests mock the `ddgs.DDGS` library as well as network activities to ensure the test suite runs instantly, robustly, and offline.
+Our tests mock the `DDGSAdapter` and the underlying `ddgs.DDGS` library to ensure that CLI routing, parameter translations, and network activities are validated robustly, instantly, and offline.

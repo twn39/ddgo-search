@@ -14,7 +14,7 @@ import pytest
 from typer.testing import CliRunner
 
 # Mock getproxies to return empty dict (disables macOS system configuration proxy settings)
-urllib.request.getproxies = lambda: {}
+urllib.request.getproxies = lambda: dict[str, str]()  # type: ignore
 
 from ddgo_search.cli import app  # noqa: E402
 from ddgo_search.utils import ensure_rate_limit, parse_proxies  # noqa: E402
@@ -25,7 +25,7 @@ def clean_env_proxies(monkeypatch) -> Generator[None, None, None]:
     """Ensure proxy environment variables and system settings do not interfere with local integration tests."""
     import urllib.request
 
-    monkeypatch.setattr(urllib.request, "getproxies", lambda: {})
+    monkeypatch.setattr(urllib.request, "getproxies", lambda: dict[str, str]())
 
     old_env = {}
     proxy_vars = [

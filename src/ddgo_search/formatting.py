@@ -88,7 +88,7 @@ def print_table_text(results: List[Dict[str, Any]]) -> None:
             [
                 str(i),
                 truncate(res.get("title", ""), 40),
-                truncate(res.get("href", ""), 35),
+                truncate(res.get("url", ""), 35),
                 truncate(res.get("body", ""), 65),
             ]
         )
@@ -109,7 +109,7 @@ def print_table_images(results: List[Dict[str, Any]]) -> None:
                 truncate(res.get("title", ""), 35),
                 resolution,
                 truncate(res.get("source", ""), 20),
-                truncate(res.get("image", ""), 45),
+                truncate(res.get("url", ""), 45),
             ]
         )
     console.print(format_simple_table(headers, rows))
@@ -144,7 +144,7 @@ def print_table_videos(results: List[Dict[str, Any]]) -> None:
                 truncate(res.get("duration", ""), 10),
                 truncate(res.get("publisher", ""), 15),
                 truncate(res.get("published", ""), 15),
-                truncate(res.get("embed_url", res.get("url", "")), 40),
+                truncate(res.get("url", ""), 40),
             ]
         )
     console.print(format_simple_table(headers, rows))
@@ -172,7 +172,7 @@ def print_plain_text(results: List[Dict[str, Any]]) -> None:
     """Print text search results as plain text."""
     for i, res in enumerate(results, 1):
         console.print(f"[bold cyan]{i}. {res.get('title')}[/bold cyan]")
-        console.print(f"[blue]{res.get('href')}[/blue]")
+        console.print(f"[blue]{res.get('url')}[/blue]")
         console.print(f"{res.get('body')}\n")
 
 
@@ -184,7 +184,7 @@ def print_plain_images(results: List[Dict[str, Any]]) -> None:
         resolution = f" ({w}x{h})" if w and h else ""
         console.print(f"[bold cyan]{i}. {res.get('title')}{resolution}[/bold cyan]")
         console.print(f"Source: {res.get('source')}")
-        console.print(f"Image: {res.get('image')}\n")
+        console.print(f"Image: {res.get('url')}\n")
 
 
 def print_plain_news(results: List[Dict[str, Any]]) -> None:
@@ -205,7 +205,7 @@ def print_plain_videos(results: List[Dict[str, Any]]) -> None:
         console.print(
             f"Publisher: {res.get('publisher')} | Published: {res.get('published')}"
         )
-        console.print(f"URL: [blue]{res.get('embed_url', res.get('url'))}[/blue]\n")
+        console.print(f"URL: [blue]{res.get('url')}[/blue]\n")
 
 
 def print_plain_books(results: List[Dict[str, Any]]) -> None:
