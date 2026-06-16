@@ -49,7 +49,6 @@ env/
 .DS_Store
 Thumbs.db
 .codegraph
-.codex
 .crush
 crush
 .gitmodules

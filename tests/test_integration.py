@@ -42,7 +42,8 @@ class MockHTMLHandler(http.server.BaseHTTPRequestHandler):
 def local_http_server() -> Generator[str, None, None]:
     """Start a lightweight local HTTP server in a background thread."""
     server = http.server.HTTPServer(("127.0.0.1", 0), MockHTMLHandler)
-    ip, port = server.server_address
+    addr = server.server_address
+    ip, port = addr[0], addr[1]
     url = f"http://{ip}:{port}/"
 
     thread = threading.Thread(target=server.serve_forever)
