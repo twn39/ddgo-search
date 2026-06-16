@@ -165,27 +165,19 @@ def _run_action(
         raise typer.Exit(code=1)
 
 
-def _run_ddgs_search(
+def _execute_search(
     ctx: typer.Context,
-    method_name: str,
-    category: str,
-    fmt: str,
-    *args,
-    **kwargs,
-) -> None:
-    """Execute search queries dynamically via DDGS and format output."""
+    search_call: Callable[[DDGS], Any],
+) -> Any:
+    """Execute search query using client connection wrapper with type safety."""
     cfg: Config = ctx.obj
 
     def search_func(proxy: Optional[str]) -> Any:
         with DDGS(proxy=proxy, timeout=cfg.timeout, verify=cfg.verify) as ddgs:
-            method = getattr(ddgs, method_name)
-            return method(*args, **kwargs)
+            return search_call(ddgs)
 
-    results = _run_action(ctx, search_func)
-    if not results:
-        console.print("[yellow]No results found.[/yellow]")
-        return
-    display_results(results, category, fmt)
+    return _run_action(ctx, search_func)
+
 
 
 def _handle_content_output(
@@ -231,19 +223,22 @@ def text(
     ),
 ) -> None:
     """Perform a text search across multiple search engines with auto-retries."""
-    _run_ddgs_search(
+    results = _execute_search(
         ctx,
-        method_name="text",
-        category="text",
-        fmt=format.value,
-        query=query,
-        region=region,
-        safesearch=safesearch.value,
-        timelimit=timelimit,
-        max_results=max_results,
-        page=page,
-        backend=backend,
+        lambda ddgs: ddgs.text(
+            query=query,
+            region=region,
+            safesearch=safesearch.value,
+            timelimit=timelimit,
+            max_results=max_results,
+            page=page,
+            backend=backend,
+        ),
     )
+    if not results:
+        console.print("[yellow]No results found.[/yellow]")
+        return
+    display_results(results, "text", format.value)
 
 
 @app.command()
@@ -286,20 +281,23 @@ def images(
     if license_image:
         kwargs["license_image"] = license_image
 
-    _run_ddgs_search(
+    results = _execute_search(
         ctx,
-        method_name="images",
-        category="images",
-        fmt=format.value,
-        query=query,
-        region=region,
-        safesearch=safesearch.value,
-        timelimit=timelimit,
-        max_results=max_results,
-        page=page,
-        backend=backend,
-        **kwargs,
+        lambda ddgs: ddgs.images(
+            query=query,
+            region=region,
+            safesearch=safesearch.value,
+            timelimit=timelimit,
+            max_results=max_results,
+            page=page,
+            backend=backend,
+            **kwargs,
+        ),
     )
+    if not results:
+        console.print("[yellow]No results found.[/yellow]")
+        return
+    display_results(results, "images", format.value)
 
 
 @app.command()
@@ -336,20 +334,23 @@ def videos(
     if license_videos:
         kwargs["license_videos"] = license_videos
 
-    _run_ddgs_search(
+    results = _execute_search(
         ctx,
-        method_name="videos",
-        category="videos",
-        fmt=format.value,
-        query=query,
-        region=region,
-        safesearch=safesearch.value,
-        timelimit=timelimit,
-        max_results=max_results,
-        page=page,
-        backend=backend,
-        **kwargs,
+        lambda ddgs: ddgs.videos(
+            query=query,
+            region=region,
+            safesearch=safesearch.value,
+            timelimit=timelimit,
+            max_results=max_results,
+            page=page,
+            backend=backend,
+            **kwargs,
+        ),
     )
+    if not results:
+        console.print("[yellow]No results found.[/yellow]")
+        return
+    display_results(results, "videos", format.value)
 
 
 @app.command()
@@ -371,19 +372,22 @@ def news(
     ),
 ) -> None:
     """Perform a news search with auto-retries and proxy rotation."""
-    _run_ddgs_search(
+    results = _execute_search(
         ctx,
-        method_name="news",
-        category="news",
-        fmt=format.value,
-        query=query,
-        region=region,
-        safesearch=safesearch.value,
-        timelimit=timelimit,
-        max_results=max_results,
-        page=page,
-        backend=backend,
+        lambda ddgs: ddgs.news(
+            query=query,
+            region=region,
+            safesearch=safesearch.value,
+            timelimit=timelimit,
+            max_results=max_results,
+            page=page,
+            backend=backend,
+        ),
     )
+    if not results:
+        console.print("[yellow]No results found.[/yellow]")
+        return
+    display_results(results, "news", format.value)
 
 
 @app.command()
@@ -398,16 +402,19 @@ def books(
     ),
 ) -> None:
     """Perform a book search with auto-retries and proxy rotation."""
-    _run_ddgs_search(
+    results = _execute_search(
         ctx,
-        method_name="books",
-        category="books",
-        fmt=format.value,
-        query=query,
-        max_results=max_results,
-        page=page,
-        backend=backend,
+        lambda ddgs: ddgs.books(
+            query=query,
+            max_results=max_results,
+            page=page,
+            backend=backend,
+        ),
     )
+    if not results:
+        console.print("[yellow]No results found.[/yellow]")
+        return
+    display_results(results, "books", format.value)
 
 
 @app.command()
@@ -429,11 +436,10 @@ def extract(
 ) -> None:
     """Fetch a URL and extract its main content with auto-retries and proxy rotation."""
 
-    def extract_func(proxy: Optional[str]) -> dict:
-        with DDGS(proxy=proxy, timeout=ctx.obj.timeout, verify=ctx.obj.verify) as ddgs:
-            return ddgs.extract(url=url, fmt=fmt.value)
-
-    result = _run_action(ctx, extract_func)
+    result = _execute_search(
+        ctx,
+        lambda ddgs: ddgs.extract(url=url, fmt=fmt.value)
+    )
     content = result.get("content", "")
 
     # If bytes, decode or handle appropriately

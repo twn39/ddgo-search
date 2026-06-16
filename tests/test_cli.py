@@ -367,54 +367,24 @@ def test_run_action_exception() -> None:
 
 
 @patch("ddgo_search.cli.DDGS")
-@patch("ddgo_search.cli.display_results")
-def test_run_ddgs_search_dynamic_dispatch(
-    mock_display: MagicMock, mock_ddgs_class: MagicMock
-) -> None:
-    """Test _run_ddgs_search resolves method via reflection and processes results."""
-    from ddgo_search.cli import _run_ddgs_search, Config
+def test_execute_search_type_safe(mock_ddgs_class: MagicMock) -> None:
+    """Test _execute_search invokes the provided search closure with type safety."""
+    from ddgo_search.cli import _execute_search, Config
 
     mock_ctx = MagicMock()
     mock_ctx.obj = Config(proxy=None, timeout=10, verify=True, max_retries=1)
 
     mock_ddgs = MagicMock()
-    mock_ddgs.text.return_value = [{"title": "Dynamic Text"}]
+    mock_ddgs.text.return_value = [{"title": "Type Safe Text"}]
     mock_ddgs_class.return_value.__enter__.return_value = mock_ddgs
 
-    # Run text query dynamically via reflection
-    _run_ddgs_search(
+    # Call _execute_search using a type-safe lambda closure
+    res = _execute_search(
         mock_ctx,
-        method_name="text",
-        category="text",
-        fmt="json",
-        query="dynamic query",
+        lambda ddgs: ddgs.text(query="test query")
     )
 
-    # Assert correct method was resolved and called
-    mock_ddgs.text.assert_called_once_with(query="dynamic query")
-    # Assert display_results was called with results
-    mock_display.assert_called_once_with([{"title": "Dynamic Text"}], "text", "json")
+    # Verify result and call logic
+    assert res == [{"title": "Type Safe Text"}]
+    mock_ddgs.text.assert_called_once_with(query="test query")
 
-
-@patch("ddgo_search.cli.DDGS")
-def test_run_ddgs_search_method_not_found(mock_ddgs_class: MagicMock) -> None:
-    """Test _run_ddgs_search exits with code 1 when method_name does not exist on DDGS."""
-    from ddgo_search.cli import _run_ddgs_search, Config
-    from ddgs import DDGS
-    import typer
-
-    mock_ctx = MagicMock()
-    mock_ctx.obj = Config(proxy=None, timeout=10, verify=True, max_retries=1)
-
-    mock_ddgs = MagicMock(spec=DDGS)
-    mock_ddgs_class.return_value.__enter__.return_value = mock_ddgs
-
-    with pytest.raises(typer.Exit) as exc_info:
-        _run_ddgs_search(
-            mock_ctx,
-            method_name="nonexistent",
-            category="text",
-            fmt="json",
-            query="test",
-        )
-    assert exc_info.value.exit_code == 1
