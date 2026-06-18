@@ -144,17 +144,51 @@ class DDGSAdapter:
                 backend=backend,
             )
 
-        raw_results = self._run_with_exception_mapping(run)
-        results: List[TextSearchResult] = []
-        for r in raw_results or []:
-            results.append(
-                {
-                    "title": r.get("title", ""),
-                    "url": r.get("href", ""),
-                    "body": r.get("body", ""),
-                }
+        try:
+            raw_results = self._run_with_exception_mapping(run)
+            results: List[TextSearchResult] = []
+            for r in raw_results or []:
+                results.append(
+                    {
+                        "title": r.get("title", ""),
+                        "url": r.get("href", ""),
+                        "body": r.get("body", ""),
+                    }
+                )
+            return results
+        except Exception as e:
+            from .utils import err_console, scrape_ddg_lite
+
+            err_console.print(
+                f"[yellow]Warning: Primary DDG search failed ({e}). "
+                f"Falling back to self-developed Lite search crawler...[/yellow]"
             )
-        return results
+            try:
+                fallback_results = scrape_ddg_lite(
+                    query=query,
+                    region=region,
+                    safesearch=safesearch,
+                    timelimit=timelimit,
+                    max_results=max_results,
+                    proxy=self.proxy,
+                    timeout=self.timeout,
+                    verify=self.verify,
+                )
+                results = []
+                for r in fallback_results:
+                    results.append(
+                        {
+                            "title": r.get("title", ""),
+                            "url": r.get("url", ""),
+                            "body": r.get("body", ""),
+                        }
+                    )
+                return results
+            except Exception as fallback_err:
+                raise SearchError(
+                    f"Search failed on both primary and fallback engines. "
+                    f"Primary error: {e}. Fallback error: {fallback_err}"
+                ) from fallback_err
 
     def images(
         self,

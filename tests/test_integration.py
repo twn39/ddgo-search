@@ -212,3 +212,36 @@ def test_ensure_rate_limit_concurrency() -> None:
         # Both should finish quickly without serializing with each other (duration < 0.2s)
         for _, s, e in events:
             assert e - s < 0.2
+
+
+def test_scrape_ddg_lite() -> None:
+    """Test scrape_ddg_lite crawler directly and verify multi-page pagination."""
+    from ddgo_search.utils import scrape_ddg_lite
+
+    results = scrape_ddg_lite("python programming", max_results=12)
+
+    assert len(results) == 12
+    for r in results:
+        assert isinstance(r, dict)
+        assert "title" in r
+        assert "url" in r
+        assert "body" in r
+        assert r["url"].startswith("http")
+
+
+def test_ddgs_adapter_fallback_to_lite() -> None:
+    """Test that DDGSAdapter.text falls back to scrape_ddg_lite when the primary client fails."""
+    from unittest.mock import patch
+    from ddgo_search.adapter import DDGSAdapter
+    from ddgs.exceptions import DDGSException
+
+    with patch("ddgs.DDGS.text", side_effect=DDGSException("Mocked DDG SDK Failure")):
+        with DDGSAdapter() as adapter:
+            results = adapter.text("python programming", max_results=3)
+
+            assert len(results) == 3
+            for r in results:
+                assert "title" in r
+                assert "url" in r
+                assert "body" in r
+                assert r["url"].startswith("http")

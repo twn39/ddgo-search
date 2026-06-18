@@ -106,13 +106,19 @@ def test_adapter_extract_format_translation(mock_ddgs_class: MagicMock) -> None:
 
 
 @patch("ddgo_search.adapter.DDGS")
-def test_adapter_search_operation_exception_mapping(mock_ddgs_class: MagicMock) -> None:
-    """Test that operations exceptions map to custom search exceptions."""
+@patch("ddgo_search.utils.scrape_ddg_lite")
+def test_adapter_search_operation_exception_mapping(
+    mock_scrape: MagicMock, mock_ddgs_class: MagicMock
+) -> None:
+    """Test that operations exceptions map to custom search exceptions when fallback also fails."""
     mock_ddgs = MagicMock()
     mock_ddgs.text.side_effect = DDGSException("Internal error")
     mock_ddgs_class.return_value = mock_ddgs
+    mock_scrape.side_effect = Exception("Fallback error")
 
     with DDGSAdapter() as adapter:
         with pytest.raises(SearchError) as exc_info:
             adapter.text(query="fail")
-        assert "Search operation failed" in str(exc_info.value)
+        assert "Search failed on both primary and fallback engines" in str(
+            exc_info.value
+        )
