@@ -130,11 +130,11 @@ def test_proxy_file_parsing_integration(tmp_path: Path) -> None:
 
 def test_rate_limiting_integration() -> None:
     """Test that ensure_rate_limit correctly writes and updates the rate limit timestamp in the temp file."""
-    # Enforce rate limit twice to verify it reads/updates the temp file correctly
+    # Enforce rate limit to verify it reads/updates the temp file correctly
     ensure_rate_limit()
 
     temp_dir = tempfile.gettempdir()
-    rate_file = os.path.join(temp_dir, "ddgo_search_rate.json")
+    rate_file = os.path.join(temp_dir, "ddgo_search_rate_local.json")
 
     assert os.path.exists(rate_file)
 
@@ -156,3 +156,59 @@ def test_fetch_github_integration() -> None:
     assert result.exit_code == 0
     # Github repository page should contain twn39/ddgo-search
     assert "ddgo-search" in result.stdout.lower()
+
+
+def test_ensure_rate_limit_concurrency() -> None:
+    """Test that ensure_rate_limit serializes calls on the same proxy and parallelizes on different proxies."""
+    from unittest.mock import patch
+
+    # We mock random.uniform to return a constant 0.3s gap to keep the test fast but measurable
+    with patch("random.uniform", return_value=0.3):
+        events = []
+
+        def run_search(proxy: str | None):
+            start = time.time()
+            ensure_rate_limit(proxy)
+            end = time.time()
+            events.append((proxy, start, end))
+
+        # 1. Test serialization on the SAME proxy (or local IP)
+        t1 = threading.Thread(target=run_search, args=(None,))
+        t2 = threading.Thread(target=run_search, args=(None,))
+
+        # Start t1, wait a tiny bit to make sure it enters first, then start t2
+        t1.start()
+        time.sleep(0.05)
+        t2.start()
+
+        t1.join()
+        t2.join()
+
+        # Sort events by start time to handle thread scheduling differences
+        events.sort(key=lambda x: x[1])
+        p1, s1, e1 = events[0]
+        p2, s2, e2 = events[1]
+
+        assert p1 is None
+        assert p2 is None
+        # t2 must have waited at least 0.25s after t1 started (specifically required_gap minus elapsed)
+        assert e2 - s1 >= 0.25
+
+        # 2. Test parallelization on DIFFERENT proxies
+        events.clear()
+
+        # Wait to clear any lingering lock interval
+        time.sleep(0.3)
+
+        t3 = threading.Thread(target=run_search, args=("http://proxy1:8080",))
+        t4 = threading.Thread(target=run_search, args=("http://proxy2:8080",))
+
+        t3.start()
+        t4.start()
+
+        t3.join()
+        t4.join()
+
+        # Both should finish quickly without serializing with each other (duration < 0.2s)
+        for _, s, e in events:
+            assert e - s < 0.2

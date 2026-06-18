@@ -52,7 +52,7 @@ The project is a resilient CLI wrapper around the Python `ddgs` (DuckDuckGo Sear
 2. **Context Setup**: `main_callback()` is triggered, parsing global options (`--proxy`, `--timeout`, `--verify`, `--max-retries`). It builds a `Config` object and attaches it to the Typer context (`ctx.obj`).
 3. **Command Routing**: Typer routes execution to a specific subcommand handler (`text`, `images`, `videos`, `news`, `books`, `extract`, `fetch`).
 4. **Execution & Resiliency**: The subcommand delegates execution to the `DDGSAdapter` inside `_execute_search()`. The adapter translates input options and executes the query through `execute_with_retry()`.
-5. **Rate Limiting**: Within `execute_with_retry()`, `ensure_rate_limit()` is called. It checks the global `ddgo_search_rate.json` file to ensure a randomized gap of **1.5 to 3.0 seconds** has elapsed since the last request across any process.
+5. **Rate Limiting**: Within `execute_with_retry()`, `ensure_rate_limit()` is called. It checks the proxy-specific `ddgo_search_rate_<key>.json` file to ensure a randomized gap of **1.0 to 2.5 seconds** has elapsed since the last request using that outbound IP (isolated per proxy) across any process.
 6. **Query & Proxy Rotation**: The wrapper tries to execute the query. If a proxy was provided (single, comma-separated, or file path), the query uses it. On failure, it performs exponential backoff with jitter and rotates to the next proxy.
 7. **Formatting**: If successful, normalized DTO results are returned to the CLI and passed to `display_results()` which maps formatting functions (`json`, `csv`, `plain`, `table`) according to the active query category.
 
@@ -91,8 +91,9 @@ The project is a resilient CLI wrapper around the Python `ddgs` (DuckDuckGo Sear
 1. **Resolution & Extract Format Translation (Typos in `ddgs` library)**:
    - The third-party `ddgs` library expects `"standart"` as the value for standard resolution instead of `"standard"`, and verbose format values like `"text_markdown"`.
    - The CLI exposes standard clean options (`standard` and `markdown`). The mapping is performed dynamically inside `src/ddgo_search/adapter.py` to shield CLI callers from library anomalies. Do not revert to raw typo values in `cli.py` or enums.
-2. **Rate Limiting Persistence**:
-   - Rate limiting relies on a file named `ddgo_search_rate.json` written to the system's temporary directory (`tempfile.gettempdir()`). If writing/reading to/from this file fails, the application fails silently to avoid blocking execution.
+2. **Rate Limiting & Proxy-Aware Concurrency**:
+   - Rate limiting isolates requests per proxy (or local IP) and uses cross-process locks (`ddgo_search_rate_<key>.lock` using `fcntl` on Unix/macOS or `msvcrt` on Windows) written to the system's temporary directory (`tempfile.gettempdir()`).
+   - This serializes requests sharing the same outbound IP to avoid 403s, while allowing queries on different proxies to run concurrently. If locking, reading, or writing fails, the application falls back safely to lock-free logic to avoid blocking execution.
 3. **Proxy Input Formats**:
    - The `--proxy` option accepts a single proxy URL, a comma-separated list of proxy URLs, or a **file path** containing proxy URLs (one per line). The parser `parse_proxies()` detects local files dynamically.
 4. **Markdown Cleaning**:

@@ -12,7 +12,7 @@ A highly resilient, token-efficient, and feature-rich Command Line Interface (CL
 
 - **🌐 Comprehensive Query Support**: Subcommands for `text`, `images`, `videos`, `news`, `books`, and web page extraction/fetching.
 - **🔄 Resilient Proxy Rotation**: Accepts single proxy URLs, comma-separated lists, or files containing lists of proxies. Automatically rotates proxy servers sequentially on failure.
-- **⏱️ Process-Safe Rate Limiting**: Randomised delays (between 1.5s to 3.0s) are tracked globally using a system-level temporary file to ensure safe execution even when multiple commands are run concurrently.
+- **⏱️ Process-Safe Rate Limiting**: Randomised delays (between 1.0s to 2.5s) are tracked per proxy/IP using system-level lock files to allow parallel requests across different proxies while safely serializing requests on the same proxy.
 - **⚡ Direct Web Fetching (`fetch`)**: Inspired by Charmbracelet's `crush` tool. Directly fetches and converts webpages using `httpx`, `BeautifulSoup`, and `markdownify` into beautiful plain text, markdown, or HTML, with auto-truncation limits (e.g., 100KB) to preserve context windows.
 - **📊 Token-Efficient Outputs**: Defaults to `plain` text outputs for maximum token conservation. Includes a custom `table` ASCII layout that automatically wraps content to fit terminal widths cleanly without truncating data, preserving readability and tokens.
 
