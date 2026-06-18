@@ -129,7 +129,9 @@ class DDGSAdapter:
         """Perform text search and return normalized results."""
         client = self._client
         if client is None:
-            raise SearchError("Client is not initialized. Use inside a context manager.")
+            raise SearchError(
+                "Client is not initialized. Use inside a context manager."
+            )
 
         def run() -> Any:
             return client.text(
@@ -168,7 +170,9 @@ class DDGSAdapter:
         """Perform image search and return normalized results."""
         client = self._client
         if client is None:
-            raise SearchError("Client is not initialized. Use inside a context manager.")
+            raise SearchError(
+                "Client is not initialized. Use inside a context manager."
+            )
 
         def run() -> Any:
             return client.images(
@@ -210,7 +214,9 @@ class DDGSAdapter:
         """Perform video search and return normalized results."""
         client = self._client
         if client is None:
-            raise SearchError("Client is not initialized. Use inside a context manager.")
+            raise SearchError(
+                "Client is not initialized. Use inside a context manager."
+            )
 
         # Translate resolution 'standard' to 'standart' expected by the library
         if "resolution" in kwargs and kwargs["resolution"] == "standard":
@@ -255,7 +261,9 @@ class DDGSAdapter:
         """Perform news search and return normalized results."""
         client = self._client
         if client is None:
-            raise SearchError("Client is not initialized. Use inside a context manager.")
+            raise SearchError(
+                "Client is not initialized. Use inside a context manager."
+            )
 
         def run() -> Any:
             return client.news(
@@ -292,7 +300,9 @@ class DDGSAdapter:
         """Perform book search and return normalized results."""
         client = self._client
         if client is None:
-            raise SearchError("Client is not initialized. Use inside a context manager.")
+            raise SearchError(
+                "Client is not initialized. Use inside a context manager."
+            )
 
         def run() -> Any:
             return client.books(
@@ -324,7 +334,9 @@ class DDGSAdapter:
         """Fetch a URL and extract its main content as DTO."""
         client = self._client
         if client is None:
-            raise SearchError("Client is not initialized. Use inside a context manager.")
+            raise SearchError(
+                "Client is not initialized. Use inside a context manager."
+            )
 
         # Translate format to what the third-party client expects
         lib_fmt = fmt

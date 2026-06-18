@@ -18,7 +18,9 @@ def test_adapter_context_manager(mock_ddgs_class: MagicMock) -> None:
         assert adapter.proxy == "http://proxy"
         assert adapter.timeout == 15
         assert adapter.verify is False
-        mock_ddgs_class.assert_called_once_with(proxy="http://proxy", timeout=15, verify=False)
+        mock_ddgs_class.assert_called_once_with(
+            proxy="http://proxy", timeout=15, verify=False
+        )
         mock_ddgs.__enter__.assert_called_once()
 
     mock_ddgs.__exit__.assert_called_once()

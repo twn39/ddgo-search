@@ -40,43 +40,38 @@ def truncate(val: Any, max_len: int) -> str:
     return s
 
 
-def format_simple_table(headers: List[str], rows: List[List[str]]) -> str:
-    """Format list of rows as a token-efficient space-padded ASCII table."""
-    # Find max width for each column
-    col_widths = [len(h) for h in headers]
+def format_simple_table(
+    headers: List[str], rows: List[List[str]], width: int | None = None
+) -> str:
+    """Format list of rows as a token-efficient space-padded ASCII table using Rich Table for auto-wrapping and no truncation."""
+    from rich.table import Table
+
+    # Fallback to the global console's width if not specified
+    table_width = width or console.width
+    console_capture = Console(color_system=None, width=table_width)
+    table = Table(
+        box=None, show_header=True, header_style="", padding=(0, 3), pad_edge=False
+    )
+    for h in headers:
+        table.add_column(h, overflow="fold")
     for row in rows:
-        for i, val in enumerate(row):
-            if i < len(col_widths):
-                col_widths[i] = max(col_widths[i], len(str(val)))
+        table.add_row(*[str(val) for val in row])
+    with console_capture.capture() as capture:
+        console_capture.print(table)
+    lines = capture.get().splitlines()
+    stripped_lines = [line.rstrip() for line in lines]
+    while stripped_lines and not stripped_lines[0]:
+        stripped_lines.pop(0)
+    while stripped_lines and not stripped_lines[-1]:
+        stripped_lines.pop(-1)
 
-    # Format headers
-    header_parts = []
-    for i, h in enumerate(headers):
-        if i == len(headers) - 1:
-            header_parts.append(h)
-        else:
-            header_parts.append(f"{h:<{col_widths[i] + 3}}")
-    header_str = "".join(header_parts)
+    # Insert divider below header (or handle empty lists safely)
+    if stripped_lines:
+        max_len = max(len(line) for line in stripped_lines)
+        divider = "-" * max_len
+        stripped_lines.insert(1, divider)
 
-    # Format rows
-    row_strs = []
-    for row in rows:
-        row_parts = []
-        for i, val in enumerate(row):
-            val_str = str(val)
-            if i == len(headers) - 1:
-                row_parts.append(val_str)
-            else:
-                row_parts.append(f"{val_str:<{col_widths[i] + 3}}")
-        row_strs.append("".join(row_parts))
-
-    # Divider line based on the maximum line length of either header or any formatted row
-    max_len = len(header_str)
-    for row_str in row_strs:
-        max_len = max(max_len, len(row_str))
-    divider = "-" * max_len
-
-    return f"{header_str}\n{divider}\n" + "\n".join(row_strs) + "\n"
+    return "\n".join(stripped_lines) + "\n"
 
 
 def print_table_text(results: List[Dict[str, Any]]) -> None:
@@ -87,9 +82,9 @@ def print_table_text(results: List[Dict[str, Any]]) -> None:
         rows.append(
             [
                 str(i),
-                truncate(res.get("title", ""), 40),
-                truncate(res.get("url", ""), 35),
-                truncate(res.get("body", ""), 65),
+                res.get("title", "") or "",
+                res.get("url", "") or "",
+                res.get("body", "") or "",
             ]
         )
     console.print(format_simple_table(headers, rows))
@@ -106,10 +101,10 @@ def print_table_images(results: List[Dict[str, Any]]) -> None:
         rows.append(
             [
                 str(i),
-                truncate(res.get("title", ""), 35),
+                res.get("title", "") or "",
                 resolution,
-                truncate(res.get("source", ""), 20),
-                truncate(res.get("url", ""), 45),
+                res.get("source", "") or "",
+                res.get("url", "") or "",
             ]
         )
     console.print(format_simple_table(headers, rows))
@@ -122,11 +117,11 @@ def print_table_news(results: List[Dict[str, Any]]) -> None:
     for res in results:
         rows.append(
             [
-                truncate(res.get("date", ""), 15),
-                truncate(res.get("title", ""), 35),
-                truncate(res.get("source", ""), 15),
-                truncate(res.get("url", ""), 35),
-                truncate(res.get("body", ""), 60),
+                res.get("date", "") or "",
+                res.get("title", "") or "",
+                res.get("source", "") or "",
+                res.get("url", "") or "",
+                res.get("body", "") or "",
             ]
         )
     console.print(format_simple_table(headers, rows))
@@ -140,11 +135,11 @@ def print_table_videos(results: List[Dict[str, Any]]) -> None:
         rows.append(
             [
                 str(i),
-                truncate(res.get("title", ""), 40),
-                truncate(res.get("duration", ""), 10),
-                truncate(res.get("publisher", ""), 15),
-                truncate(res.get("published", ""), 15),
-                truncate(res.get("url", ""), 40),
+                res.get("title", "") or "",
+                res.get("duration", "") or "",
+                res.get("publisher", "") or "",
+                res.get("published", "") or "",
+                res.get("url", "") or "",
             ]
         )
     console.print(format_simple_table(headers, rows))
@@ -158,11 +153,11 @@ def print_table_books(results: List[Dict[str, Any]]) -> None:
         rows.append(
             [
                 str(i),
-                truncate(res.get("title", ""), 35),
-                truncate(res.get("author", ""), 20),
-                truncate(res.get("publisher", ""), 15),
-                truncate(res.get("info", ""), 25),
-                truncate(res.get("url", ""), 35),
+                res.get("title", "") or "",
+                res.get("author", "") or "",
+                res.get("publisher", "") or "",
+                res.get("info", "") or "",
+                res.get("url", "") or "",
             ]
         )
     console.print(format_simple_table(headers, rows))
@@ -254,6 +249,8 @@ def display_results(results: List[Dict[str, Any]], category: str, fmt: str) -> N
 
     formatter = FORMATTER_REGISTRY.get((category, fmt))
     if not formatter:
-        raise ValueError(f"No formatter registered for category '{category}' and format '{fmt}'")
+        raise ValueError(
+            f"No formatter registered for category '{category}' and format '{fmt}'"
+        )
 
     formatter(results)

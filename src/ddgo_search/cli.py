@@ -174,7 +174,9 @@ def _execute_search(
     cfg: Config = ctx.obj
 
     def search_func(proxy: Optional[str]) -> Any:
-        with DDGSAdapter(proxy=proxy, timeout=cfg.timeout, verify=cfg.verify) as adapter:
+        with DDGSAdapter(
+            proxy=proxy, timeout=cfg.timeout, verify=cfg.verify
+        ) as adapter:
             return search_call(adapter)
 
     return _run_action(ctx, search_func)
@@ -219,7 +221,7 @@ def text(
     page: int = typer.Option(1, help="Page number to fetch."),
     backend: str = typer.Option("auto", help="Search backend to use."),
     format: OutputFormat = typer.Option(
-        OutputFormat.TABLE, "--format", "-f", help="Output format."
+        OutputFormat.PLAIN, "--format", "-f", help="Output format."
     ),
 ) -> None:
     """Perform a text search across multiple search engines with auto-retries."""
@@ -265,7 +267,7 @@ def images(
         None, help="Filter by license (e.g. any, Public, Share, Modify)."
     ),
     format: OutputFormat = typer.Option(
-        OutputFormat.TABLE, "--format", "-f", help="Output format."
+        OutputFormat.PLAIN, "--format", "-f", help="Output format."
     ),
 ) -> None:
     """Perform an image search with auto-retries and proxy rotation."""
@@ -322,7 +324,7 @@ def videos(
         None, help="Filter by video license (e.g. creativeCommon, youtube)."
     ),
     format: OutputFormat = typer.Option(
-        OutputFormat.TABLE, "--format", "-f", help="Output format."
+        OutputFormat.PLAIN, "--format", "-f", help="Output format."
     ),
 ) -> None:
     """Perform a video search with auto-retries and proxy rotation."""
@@ -368,7 +370,7 @@ def news(
     page: int = typer.Option(1, help="Page number to fetch."),
     backend: str = typer.Option("auto", help="Search backend to use."),
     format: OutputFormat = typer.Option(
-        OutputFormat.TABLE, "--format", "-f", help="Output format."
+        OutputFormat.PLAIN, "--format", "-f", help="Output format."
     ),
 ) -> None:
     """Perform a news search with auto-retries and proxy rotation."""
@@ -398,7 +400,7 @@ def books(
     page: int = typer.Option(1, help="Page number to fetch."),
     backend: str = typer.Option("auto", help="Search backend to use."),
     format: OutputFormat = typer.Option(
-        OutputFormat.TABLE, "--format", "-f", help="Output format."
+        OutputFormat.PLAIN, "--format", "-f", help="Output format."
     ),
 ) -> None:
     """Perform a book search with auto-retries and proxy rotation."""
