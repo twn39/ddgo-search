@@ -35,6 +35,19 @@ def test_help() -> None:
     assert "DuckDuckGo Search" in result.stdout
 
 
+def test_version() -> None:
+    """Test that the version flag returns the correct application version and exits."""
+    from ddgo_search import __version__
+
+    result = runner.invoke(app, ["--version"])
+    assert result.exit_code == 0
+    assert f"ddgo-search version {__version__}" in result.stdout
+
+    result_short = runner.invoke(app, ["-v"])
+    assert result_short.exit_code == 0
+    assert f"ddgo-search version {__version__}" in result_short.stdout
+
+
 @patch("ddgo_search.cli.DDGSAdapter")
 def test_text_command(mock_ddgs_class: MagicMock) -> None:
     """Test standard text search command."""

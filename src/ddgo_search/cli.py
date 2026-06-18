@@ -119,9 +119,26 @@ class Config:
         self.max_retries = max_retries
 
 
+def version_callback(value: bool) -> None:
+    """Print the version of ddgo-search and exit."""
+    if value:
+        from . import __version__
+
+        typer.echo(f"ddgo-search version {__version__}")
+        raise typer.Exit()
+
+
 @app.callback()
 def main_callback(
     ctx: typer.Context,
+    version: Optional[bool] = typer.Option(
+        None,
+        "--version",
+        "-v",
+        callback=version_callback,
+        is_eager=True,
+        help="Show the version and exit.",
+    ),
     proxy: Optional[str] = typer.Option(
         None,
         "--proxy",
