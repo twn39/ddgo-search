@@ -71,7 +71,9 @@ ddgo-search text "python programming" [OPTIONS]
 ```
 - `--max-results INTEGER`: Maximum results to return (default: `10`).
 - `--timelimit [d|w|m|y]`: Limit results to day, week, month, or year.
-- `-f, --format [table|plain|json|csv]`: Output format (default: `table`).
+- `--region TEXT`: Region/country code (default: `us-en`).
+- `--safesearch [on|moderate|off]`: Content filtering (default: `moderate`).
+- `-f, --format [table|plain|json|csv]`: Output format (default: `plain`).
 
 #### 2. Image Search (`images`)
 Search for images.
@@ -83,7 +85,9 @@ ddgo-search images "space nebula" [OPTIONS]
 - `--type-image [photo|clipart|gif|transparent|line]`
 - `--layout [Square|Tall|Wide]`
 - `--license-image [any|Public|Share|Modify]`
-- `-f, --format [table|plain|json|csv]` (default: `table`).
+- `--region TEXT`: Region/country code (default: `us-en`).
+- `--safesearch [on|moderate|off]`: Content filtering (default: `moderate`).
+- `-f, --format [table|plain|json|csv]` (default: `plain`).
 
 #### 3. Video Search (`videos`)
 Search for videos.
@@ -93,7 +97,9 @@ ddgo-search videos "rust tutorial" [OPTIONS]
 - `--resolution [high|standard]`
 - `--duration [short|medium|long]`
 - `--license-videos [creativeCommon|youtube]`
-- `-f, --format [table|plain|json|csv]` (default: `table`).
+- `--region TEXT`: Region/country code (default: `us-en`).
+- `--safesearch [on|moderate|off]`: Content filtering (default: `moderate`).
+- `-f, --format [table|plain|json|csv]` (default: `plain`).
 
 *Note: The underlying library standard resolution expects `"standart"`. The CLI enum maps `"standard"` to `"standart"` automatically.*
 
@@ -103,7 +109,9 @@ Query recent news.
 ddgo-search news "climate change" [OPTIONS]
 ```
 - `--timelimit [d|w|m]`
-- `-f, --format [table|plain|json|csv]` (default: `table`).
+- `--region TEXT`: Region/country code (default: `us-en`).
+- `--safesearch [on|moderate|off]`: Content filtering (default: `moderate`).
+- `-f, --format [table|plain|json|csv]` (default: `plain`).
 
 #### 5. Book Search (`books`)
 Search DuckDuckGo books.
@@ -111,7 +119,7 @@ Search DuckDuckGo books.
 ddgo-search books "machine learning" [OPTIONS]
 ```
 - `--max-results INTEGER`: (default: `10`).
-- `-f, --format [table|plain|json|csv]` (default: `table`).
+- `-f, --format [table|plain|json|csv]` (default: `plain`).
 
 #### 6. Web Page Extract (`extract`)
 Extract main content using DuckDuckGo's internal extraction backend.
@@ -132,10 +140,33 @@ ddgo-search fetch "https://example.com" [OPTIONS]
 
 ---
 
+## 🔍 Scope Limiting & Search Operators
+
+You can narrow down search results by region, time recency, safety settings, or using direct query operators:
+
+### CLI Options
+- `--region TEXT`: Limits results to a specific region/country code (e.g., `us-en`, `cn-zh`).
+- `--timelimit [d|w|m|y]`: Retrieves only recent results from the past day, week, month, or year.
+- `--safesearch [on|moderate|off]`: Controls content filtering.
+
+### Search Operators (within QUERY)
+- `site:example.com`: Only return results within a specific website.
+- `-site:example.com`: Exclude a specific website from results.
+- `filetype:pdf`: Filter by file format (e.g., pdf, doc, ppt).
+- `intitle:keyword`: Require keyword in the page title.
+- `"exact phrase"`: Match exact word combination.
+
+Example:
+```bash
+ddgo-search text "python site:stackoverflow.com" --timelimit m
+```
+
+---
+
 ## 💡 Best Practices for Agents
 
 1. **Token Conservation**:
-   - Use `--format table` (default) or `--format plain` instead of `json` or `csv` when listing results in a terminal. The `table` format produces custom space-padded ASCII borders to save context window tokens compared to standard heavy grids.
+   - Use `--format plain` (default) or `--format table` instead of `json` or `csv` when listing results in a terminal. The `plain` format is the most token-efficient representation, whereas the custom `table` format auto-wraps content to fit terminal widths cleanly without truncation.
    - For `fetch` or `extract`, use the defaults to get Markdown representation which is easier to comprehend. Adjust `--max-size` if you want to retrieve smaller chunks of a page to keep tokens under control.
 
 2. **Handling Rate Limits**:
