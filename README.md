@@ -14,7 +14,7 @@ A highly resilient, token-efficient, and feature-rich Command Line Interface (CL
 - **🔄 Resilient Proxy Rotation**: Accepts single proxy URLs, comma-separated lists, or files containing lists of proxies. Automatically rotates proxy servers sequentially on failure.
 - **⏱️ Process-Safe Rate Limiting**: Randomised delays (between 1.5s to 3.0s) are tracked globally using a system-level temporary file to ensure safe execution even when multiple commands are run concurrently.
 - **⚡ Direct Web Fetching (`fetch`)**: Inspired by Charmbracelet's `crush` tool. Directly fetches and converts webpages using `httpx`, `BeautifulSoup`, and `markdownify` into beautiful plain text, markdown, or HTML, with auto-truncation limits (e.g., 100KB) to preserve context windows.
-- **📊 Token-Efficient ASCII Layouts**: Formats console lists using space-padded ASCII dividers rather than heavy Unicode grids to save context window tokens when using LLM agents.
+- **📊 Token-Efficient Outputs**: Defaults to `plain` text outputs for maximum token conservation. Includes a custom `table` ASCII layout that automatically wraps content to fit terminal widths cleanly without truncating data, preserving readability and tokens.
 
 ---
 
@@ -65,6 +65,28 @@ These options must be passed *before* any subcommand:
 - `-t, --timeout INTEGER`: Request timeout in seconds (default: `10`).
 - `--verify / --no-verify`: Enable/disable SSL certification verification (default: `--verify`).
 - `-r, --max-retries INTEGER`: Maximum retries upon server failures or timeouts (default: `3`).
+
+---
+
+### 🔍 Scope Limiting & Search Operators
+
+You can narrow down search results using built-in options or standard search syntax operators directly in the query string:
+
+*   **CLI Options**:
+    *   `--region TEXT`: Limits results to a specific region/country code (default: `us-en`, e.g. `cn-zh`, `uk-en`).
+    *   `--timelimit [d|w|m|y]`: Retrieves only recent results from the past day, week, month, or year.
+    *   `--safesearch [on|moderate|off]`: Controls content filtering (default: `moderate`).
+*   **Search Operators (within QUERY)**:
+    *   `site:example.com`: Only return results within a specific website.
+    *   `-site:example.com`: Exclude a specific website from results.
+    *   `filetype:pdf`: Filter by file format (e.g., pdf, doc, xls).
+    *   `intitle:keyword`: Require keyword in the page title.
+    *   `"exact phrase"`: Match exact word combination.
+
+*Example:*
+```bash
+uv run ddgo-search text "python site:stackoverflow.com" --timelimit m
+```
 
 ---
 

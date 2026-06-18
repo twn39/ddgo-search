@@ -63,10 +63,18 @@ The project is a resilient CLI wrapper around the Python `ddgs` (DuckDuckGo Sear
 - **CLI Framework**: [Typer](https://typer.tiangolo.com/) is used for defining commands, arguments, option groups, and help text. Subcommands match `ddgs` methods directly.
 - **Terminal output**: [Rich](https://github.com/Textualize/rich) is used for rendering plain and markdown outputs.
 - **Output Formats**:
-  - `table`: Custom space-efficient ASCII table. To minimize token waste, a custom ASCII generator `format_simple_table()` is used instead of heavy tables.
+  - `plain`: Default clean colored output optimized for terminal readability and token efficiency.
+  - `table`: Space-saving ASCII table. Uses Rich Table with edge padding disabled to auto-wrap long content cleanly without any truncation.
   - `json`: Standard JSON-serialized dump.
   - `csv`: Standard CSV format.
-  - `plain`: Clean colored output optimized for terminal readability.
+
+- **Default Format and Non-Truncation**:
+  - The CLI subcommands default to `--format plain` to preserve tokens and offer clean, readable output by default.
+  - When choosing `--format table`, the table is rendered using Rich with line-wrapping and no string truncation, ensuring all content is completely preserved.
+
+- **Scope Limiting & Search Operators**:
+  - Built-in options such as `--region`, `--timelimit`, and `--safesearch` are exposed on CLI subcommands.
+  - Advanced search operators (e.g. `site:github.com`, `filetype:pdf`, `intitle:`) can be used directly inside the query string.
 
 ---
 
