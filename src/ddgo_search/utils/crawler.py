@@ -106,7 +106,7 @@ def scrape_ddg_lite(
             for link in links:
                 title = link.get_text(strip=True)
                 href = link.get("href")
-                if not href:
+                if not href or not isinstance(href, str):
                     continue
                 url_clean = clean_ddg_url(href)
 
@@ -133,12 +133,17 @@ def scrape_ddg_lite(
             for form in soup.find_all("form"):
                 submit_btn = form.find("input", type="submit", value="Next Page >")
                 if submit_btn:
-                    inputs = {
-                        inp.get("name"): inp.get("value")
-                        for inp in form.find_all("input")
-                        if inp.get("name")
-                    }
-                    action = form.get("action") or "/lite/"
+                    inputs = {}
+                    for inp in form.find_all("input"):
+                        name = inp.get("name")
+                        val = inp.get("value") or ""
+                        if isinstance(name, str):
+                            if isinstance(val, list):
+                                val = " ".join(val)
+                            inputs[name] = str(val)
+                    action = form.get("action")
+                    if not isinstance(action, str):
+                        action = "/lite/"
                     next_form = (action, inputs)
                     break
 

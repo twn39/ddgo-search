@@ -41,7 +41,7 @@ def ensure_rate_limit(proxy: Optional[str] = None) -> None:
             try:
                 import msvcrt
 
-                msvcrt.locking(lock_fd.fileno(), msvcrt.LK_LOCK, 1)
+                msvcrt.locking(lock_fd.fileno(), msvcrt.LK_LOCK, 1)  # type: ignore
             except (ImportError, AttributeError):
                 pass  # Fallback to lock-free sleep
 
