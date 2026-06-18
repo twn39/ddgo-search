@@ -77,6 +77,21 @@ class DDGSAdapter:
         self.verify = verify
         self._client: Optional[Any] = None
 
+        from .engines import (
+            PrimaryTextSearchEngine,
+            FallbackTextSearchEngine,
+            OrchestratedTextSearchEngine,
+        )
+
+        self._text_engine = OrchestratedTextSearchEngine(
+            primary=PrimaryTextSearchEngine(self),
+            fallback=FallbackTextSearchEngine(
+                proxy=self.proxy,
+                timeout=float(self.timeout),
+                verify=self.verify,
+            ),
+        )
+
     def __enter__(self) -> "DDGSAdapter":
         try:
             self._client = DDGS(
@@ -126,69 +141,16 @@ class DDGSAdapter:
         page: int = 1,
         backend: str = "auto",
     ) -> List[TextSearchResult]:
-        """Perform text search and return normalized results."""
-        client = self._client
-        if client is None:
-            raise SearchError(
-                "Client is not initialized. Use inside a context manager."
-            )
-
-        def run() -> Any:
-            return client.text(
-                query=query,
-                region=region,
-                safesearch=safesearch,
-                timelimit=timelimit,
-                max_results=max_results,
-                page=page,
-                backend=backend,
-            )
-
-        try:
-            raw_results = self._run_with_exception_mapping(run)
-            results: List[TextSearchResult] = []
-            for r in raw_results or []:
-                results.append(
-                    {
-                        "title": r.get("title", ""),
-                        "url": r.get("href", ""),
-                        "body": r.get("body", ""),
-                    }
-                )
-            return results
-        except Exception as e:
-            from .utils import err_console, scrape_ddg_lite
-
-            err_console.print(
-                f"[yellow]Warning: Primary DDG search failed ({e}). "
-                f"Falling back to self-developed Lite search crawler...[/yellow]"
-            )
-            try:
-                fallback_results = scrape_ddg_lite(
-                    query=query,
-                    region=region,
-                    safesearch=safesearch,
-                    timelimit=timelimit,
-                    max_results=max_results,
-                    proxy=self.proxy,
-                    timeout=self.timeout,
-                    verify=self.verify,
-                )
-                results = []
-                for r in fallback_results:
-                    results.append(
-                        {
-                            "title": r.get("title", ""),
-                            "url": r.get("url", ""),
-                            "body": r.get("body", ""),
-                        }
-                    )
-                return results
-            except Exception as fallback_err:
-                raise SearchError(
-                    f"Search failed on both primary and fallback engines. "
-                    f"Primary error: {e}. Fallback error: {fallback_err}"
-                ) from fallback_err
+        """Perform text search and return normalized results using orchestrated engine."""
+        return self._text_engine.search(
+            query=query,
+            region=region,
+            safesearch=safesearch,
+            timelimit=timelimit,
+            max_results=max_results,
+            page=page,
+            backend=backend,
+        )
 
     def images(
         self,
