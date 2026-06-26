@@ -537,48 +537,6 @@ def test_skills_install_invalid_target() -> None:
     assert result.exit_code == 1
 
 
-@patch("pathlib.Path.expanduser")
-@patch("pathlib.Path.cwd")
-def test_agents_install_local(
-    mock_cwd: MagicMock, mock_expanduser: MagicMock, tmp_path: Path
-) -> None:
-    """Test installing agents locally (project level) for Codex."""
-    mock_cwd.return_value = tmp_path / "project"
-    mock_expanduser.return_value = tmp_path / "home"
-
-    result = runner.invoke(app, ["agents", "install", "--local"])
-    assert result.exit_code == 0
-    assert "Installed Codex Agent configuration" in result.stdout
-
-    # Codex Agent should exist
-    assert (tmp_path / "project" / ".codex" / "agents" / "ddgo-search.toml").exists()
-    # Codex Skill should NOT be created by this command
-    assert not (tmp_path / "project" / ".codex" / "skills").exists()
-
-
-@patch("pathlib.Path.expanduser")
-@patch("pathlib.Path.cwd")
-def test_agents_install_global(
-    mock_cwd: MagicMock, mock_expanduser: MagicMock, tmp_path: Path
-) -> None:
-    """Test installing agents globally (user level) for Codex."""
-    mock_cwd.return_value = tmp_path / "project"
-    mock_expanduser.return_value = tmp_path / "home"
-
-    result = runner.invoke(app, ["agents", "install", "--global", "--target", "codex"])
-    assert result.exit_code == 0
-    assert "Installed Codex Agent configuration" in result.stdout
-
-    # Codex Agent should exist globally
-    assert (tmp_path / "home" / ".codex" / "agents" / "ddgo-search.toml").exists()
-
-
-def test_agents_install_invalid_target() -> None:
-    """Test providing an invalid target agent for agents installation (e.g. crush, which isn't supported)."""
-    result = runner.invoke(app, ["agents", "install", "--target", "crush"])
-    assert result.exit_code == 1
-
-
 def test_format_simple_table_no_truncation_and_wrap() -> None:
     """Test format_simple_table does not truncate and wraps long lines correctly."""
     from ddgo_search.formatting import format_simple_table

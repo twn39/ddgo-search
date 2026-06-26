@@ -9,7 +9,7 @@ from .adapter import DDGSAdapter
 from rich.console import Console
 
 from .formatting import display_results
-from .installer import agents_app, skills_app
+from .installer import skills_app
 from .utils import (
     clean_markdown,
     execute_with_retry,
@@ -527,7 +527,6 @@ def fetch(
 
 
 app.add_typer(skills_app)
-app.add_typer(agents_app)
 
 
 if __name__ == "__main__":

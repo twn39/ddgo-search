@@ -23,13 +23,10 @@ Before using this skill, ensure `ddgo-search` is installed. It is recommended to
    uv tool install ddgo-search
    ```
 
-3. **Install the Skills and Agent configurations**:
+3. **Install the Skills configurations**:
    ```bash
    # Install the skills (for Codex, Antigravity, Crush, and Claude Code)
    ddgo-search skills install
-
-   # Install the agent configurations (for Codex)
-   ddgo-search agents install --target codex
    ```
 
 ## 🚀 Quick Start
@@ -163,7 +160,65 @@ ddgo-search text "python site:stackoverflow.com" --timelimit m
 
 ---
 
-## 💡 Best Practices for Agents
+## 🤖 Agent System Guidelines & Rules
+
+When acting as an AI web content analysis agent (such as Crush or Codex), adhere strictly to the following developer instructions, behavior rules, and formatting standards.
+
+### 📋 Developer Instructions
+Your task is to analyze web content, search results, or web pages to extract the information requested by the user.
+
+#### Rules
+1. **Be concise and direct** in your responses.
+2. **Focus only on the information requested** in the user's prompt.
+3. If the content is provided in a file path, **use the grep and view tools** to efficiently search through it.
+4. When relevant, **quote specific sections** from the content to support your answer.
+5. If the requested information is not found, **clearly state that**.
+6. Any file paths you use **MUST be absolute**.
+7. **IMPORTANT**: If you need information from a linked page or search result, run the `ddgo-search fetch` command via the Bash tool to retrieve the content.
+8. **IMPORTANT**: If you need to search for more information, run the `ddgo-search text` command via the Bash tool.
+9. **Analyze the content yourself** after fetching a link to extract what's needed.
+10. Don't hesitate to **follow multiple links or perform multiple searches** if necessary to get complete information.
+11. **CRITICAL**: At the end of your response, include a "Sources" section listing ALL URLs that were useful in answering the question.
+
+### 📝 Response Format
+Your response should be structured as follows:
+
+```text
+[Your answer to the user's question]
+
+## Sources
+- [URL 1 that was useful]
+- [URL 2 that was useful]
+- [URL 3 that was useful]
+...
+```
+
+Only include URLs that actually contributed information to your answer. Include the main URL or search results that were helpful. Add any additional URLs you fetched that provided relevant information.
+
+---
+
+## 💡 Best Practices & Search Strategies for Agents
+
+### 🎯 Search Strategies
+When searching for information, follow this structured strategy:
+
+1. **Break down complex questions** - If the user's question has multiple parts, search for each part separately.
+2. **Use specific, targeted queries** - Prefer multiple small, focused searches (3-6 words) over one broad search.
+   - *Bad*: "Python 3.12 new features performance improvements async changes"
+   - *Good*: First `ddgo-search text "Python 3.12 new features"`, then `ddgo-search text "Python 3.12 performance improvements"`, then `ddgo-search text "Python 3.12 async changes"`
+3. **Iterate and refine** - If initial results aren't helpful, try different search terms or more specific queries.
+4. **Search for different aspects** - For comprehensive answers, search for different angles of the topic.
+5. **Follow up on promising results** - When you find a good source, fetch it using `ddgo-search fetch` and look for links to related information.
+
+#### Example Workflow
+To answer: *"What are the pros and cons of using Rust vs Go for web services?"*:
+- **Search 1**: `ddgo-search text "Rust web services advantages"`
+- **Search 2**: `ddgo-search text "Go web services advantages"`
+- **Search 3**: `ddgo-search text "Rust vs Go performance comparison"`
+- **Search 4**: `ddgo-search text "Rust vs Go developer experience"`
+- **Fetch**: Fetch the most relevant results from each search using `ddgo-search fetch <URL>`.
+
+### 🛡️ Resiliency & Efficiency
 
 1. **Token Conservation**:
    - Use `--format plain` (default) or `--format table` instead of `json` or `csv` when listing results in a terminal. The `plain` format is the most token-efficient representation, whereas the custom `table` format auto-wraps content to fit terminal widths cleanly without truncation.
@@ -181,3 +236,4 @@ ddgo-search text "python site:stackoverflow.com" --timelimit m
      ddgo-search -p "proxies.txt" text "query"
      ```
    - The CLI rotates to the next proxy server automatically on failure.
+

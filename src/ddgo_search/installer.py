@@ -15,12 +15,6 @@ skills_app = typer.Typer(
     no_args_is_help=True,
 )
 
-agents_app = typer.Typer(
-    name="agents",
-    help="Manage subagent configurations.",
-    no_args_is_help=True,
-)
-
 
 def _get_resource_path(relative_path: str) -> Path:
     """Retrieve absolute path to a resource inside the package, or fallback to dev workspace."""
@@ -148,49 +142,3 @@ def install_skills(
             err_console.print(
                 f"[bold red]Failed to install Claude Code skills:[/bold red] {e}"
             )
-
-
-@agents_app.command("install")
-def install_agents(
-    ctx: typer.Context,
-    target: str = typer.Option(
-        "codex",
-        "--target",
-        "-t",
-        help="Target CLI agent to install subagent config to. Options: codex. (default: codex)",
-    ),
-    global_install: bool = typer.Option(
-        True,
-        "--global/--local",
-        help="Install globally (user-level) or locally (project-level).",
-    ),
-) -> None:
-    """Install ddgo-search agent configurations to supported CLI agents."""
-    if target.strip().lower() != "codex":
-        err_console.print(
-            f"[bold red]Error:[/bold red] Target '{target}' is not supported. Currently, only 'codex' is supported for agent installation."
-        )
-        raise typer.Exit(code=1)
-
-    try:
-        agent_src = _get_resource_path("agents/ddgo-search.toml")
-    except Exception as e:
-        err_console.print(f"[bold red]Error finding source files:[/bold red] {e}")
-        raise typer.Exit(code=1)
-
-    agent_content = agent_src.read_text(encoding="utf-8")
-
-    home = Path("~").expanduser()
-    cwd = Path.cwd()
-
-    codex_base = home / ".codex" if global_install else cwd / ".codex"
-    agent_dst = codex_base / "agents" / "ddgo-search.toml"
-    try:
-        agent_dst.parent.mkdir(parents=True, exist_ok=True)
-        agent_dst.write_text(agent_content, encoding="utf-8")
-        console.print(
-            f"Installed Codex Agent configuration to: [blue]{agent_dst}[/blue]"
-        )
-    except Exception as e:
-        err_console.print(f"[bold red]Failed to install Codex agents:[/bold red] {e}")
-        raise typer.Exit(code=1)
