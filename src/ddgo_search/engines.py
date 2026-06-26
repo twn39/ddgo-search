@@ -1,7 +1,7 @@
 """Search engine abstractions and fallback orchestration for ddgo-search."""
 
 from typing import Any, List, Optional, Protocol
-from .adapter import TextSearchResult
+from .models import TextSearchResult
 
 
 class TextSearchEngine(Protocol):

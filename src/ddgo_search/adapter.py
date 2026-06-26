@@ -1,77 +1,30 @@
 """Adapter layer for the ddgs (DuckDuckGo Search) library to shield ddgo-search from SDK API changes."""
 
-from dataclasses import dataclass
 from typing import Any, Callable, List, Optional
 
 from ddgs import DDGS
 from ddgs.exceptions import DDGSException, TimeoutException
 
 from .exceptions import SearchError, SearchTimeoutError
-
-
-@dataclass(frozen=True, slots=True)
-class TextSearchResult:
-    """Normalized DTO for text search results."""
-
-    title: str
-    url: str
-    body: str
-
-
-@dataclass(frozen=True, slots=True)
-class ImageSearchResult:
-    """Normalized DTO for image search results."""
-
-    title: str
-    url: str
-    source: str
-    width: Optional[int] = None
-    height: Optional[int] = None
-
-
-@dataclass(frozen=True, slots=True)
-class VideoSearchResult:
-    """Normalized DTO for video search results."""
-
-    title: str
-    duration: str
-    publisher: str
-    published: str
-    url: str
-
-
-@dataclass(frozen=True, slots=True)
-class NewsSearchResult:
-    """Normalized DTO for news search results."""
-
-    date: str
-    title: str
-    source: str
-    url: str
-    body: str
-
-
-@dataclass(frozen=True, slots=True)
-class BookSearchResult:
-    """Normalized DTO for book search results."""
-
-    title: str
-    author: str
-    publisher: str
-    info: str
-    url: str
-
-
-@dataclass(frozen=True, slots=True)
-class ExtractResult:
-    """Normalized DTO for extracted webpage content."""
-
-    url: str
-    content: str
+from .models import (
+    TextSearchResult,
+    ImageSearchResult,
+    VideoSearchResult,
+    NewsSearchResult,
+    BookSearchResult,
+    ExtractResult,
+)
+from .engines import (
+    PrimaryTextSearchEngine,
+    FallbackTextSearchEngine,
+    OrchestratedTextSearchEngine,
+)
 
 
 class DDGSAdapter:
     """Adapter wrapping ddgs.DDGS client, mapping parameters/exceptions and normalizing outputs."""
+
+    _text_engine: OrchestratedTextSearchEngine
 
     def __init__(
         self,
@@ -83,12 +36,6 @@ class DDGSAdapter:
         self.timeout = timeout
         self.verify = verify
         self._client: Optional[Any] = None
-
-        from .engines import (
-            PrimaryTextSearchEngine,
-            FallbackTextSearchEngine,
-            OrchestratedTextSearchEngine,
-        )
 
         self._text_engine = OrchestratedTextSearchEngine(
             primary=PrimaryTextSearchEngine(self),
