@@ -8,6 +8,14 @@ import pytest
 from typer.testing import CliRunner
 
 from ddgo_search.cli import app
+from ddgo_search.adapter import (
+    TextSearchResult,
+    ImageSearchResult,
+    VideoSearchResult,
+    NewsSearchResult,
+    BookSearchResult,
+    ExtractResult,
+)
 
 runner = CliRunner()
 
@@ -53,7 +61,11 @@ def test_text_command(mock_ddgs_class: MagicMock) -> None:
     """Test standard text search command."""
     mock_ddgs = MagicMock()
     mock_ddgs.text.return_value = [
-        {"title": "Test Text Title", "url": "https://test.com", "body": "Test Body"}
+        TextSearchResult(
+            title="Test Text Title",
+            url="https://test.com",
+            body="Test Body",
+        )
     ]
     mock_ddgs_class.return_value.__enter__.return_value = mock_ddgs
 
@@ -76,13 +88,13 @@ def test_images_command(mock_ddgs_class: MagicMock) -> None:
     """Test images search command."""
     mock_ddgs = MagicMock()
     mock_ddgs.images.return_value = [
-        {
-            "title": "Test Image Title",
-            "url": "https://test.com/img.jpg",
-            "source": "Test Source",
-            "width": 800,
-            "height": 600,
-        }
+        ImageSearchResult(
+            title="Test Image Title",
+            url="https://test.com/img.jpg",
+            source="Test Source",
+            width=800,
+            height=600,
+        )
     ]
     mock_ddgs_class.return_value.__enter__.return_value = mock_ddgs
 
@@ -126,13 +138,13 @@ def test_videos_command(mock_ddgs_class: MagicMock) -> None:
     """Test videos search command."""
     mock_ddgs = MagicMock()
     mock_ddgs.videos.return_value = [
-        {
-            "title": "Test Video Title",
-            "duration": "10:00",
-            "publisher": "YouTube",
-            "published": "2026-01-01",
-            "url": "https://youtube.com/embed/123",
-        }
+        VideoSearchResult(
+            title="Test Video Title",
+            duration="10:00",
+            publisher="YouTube",
+            published="2026-01-01",
+            url="https://youtube.com/embed/123",
+        )
     ]
     mock_ddgs_class.return_value.__enter__.return_value = mock_ddgs
 
@@ -172,13 +184,13 @@ def test_news_command(mock_ddgs_class: MagicMock) -> None:
     """Test news search command."""
     mock_ddgs = MagicMock()
     mock_ddgs.news.return_value = [
-        {
-            "date": "2026-06-03",
-            "title": "Test News Title",
-            "source": "CNN",
-            "url": "https://cnn.com",
-            "body": "News Body",
-        }
+        NewsSearchResult(
+            date="2026-06-03",
+            title="Test News Title",
+            source="CNN",
+            url="https://cnn.com",
+            body="News Body",
+        )
     ]
     mock_ddgs_class.return_value.__enter__.return_value = mock_ddgs
 
@@ -201,13 +213,13 @@ def test_books_command(mock_ddgs_class: MagicMock) -> None:
     """Test books search command."""
     mock_ddgs = MagicMock()
     mock_ddgs.books.return_value = [
-        {
-            "title": "Test Book Title",
-            "author": "Author Name",
-            "publisher": "Publisher Name",
-            "info": "Book Info",
-            "url": "https://test.com/book",
-        }
+        BookSearchResult(
+            title="Test Book Title",
+            author="Author Name",
+            publisher="Publisher Name",
+            info="Book Info",
+            url="https://test.com/book",
+        )
     ]
     mock_ddgs_class.return_value.__enter__.return_value = mock_ddgs
 
@@ -226,10 +238,10 @@ def test_books_command(mock_ddgs_class: MagicMock) -> None:
 def test_extract_command(mock_ddgs_class: MagicMock) -> None:
     """Test extract content command."""
     mock_ddgs = MagicMock()
-    mock_ddgs.extract.return_value = {
-        "url": "https://example.com",
-        "content": "Extracted Markdown Content",
-    }
+    mock_ddgs.extract.return_value = ExtractResult(
+        url="https://example.com",
+        content="Extracted Markdown Content",
+    )
     mock_ddgs_class.return_value.__enter__.return_value = mock_ddgs
 
     result = runner.invoke(app, ["extract", "https://example.com"])
@@ -247,10 +259,10 @@ def test_extract_command_output_file(
 ) -> None:
     """Test extract command with output file path."""
     mock_ddgs = MagicMock()
-    mock_ddgs.extract.return_value = {
-        "url": "https://example.com",
-        "content": "Extracted Markdown Content File",
-    }
+    mock_ddgs.extract.return_value = ExtractResult(
+        url="https://example.com",
+        content="Extracted Markdown Content File",
+    )
     mock_ddgs_class.return_value.__enter__.return_value = mock_ddgs
 
     out_file = tmp_path / "output.md"
@@ -397,14 +409,26 @@ def test_execute_search_type_safe(mock_ddgs_class: MagicMock) -> None:
     mock_ctx.obj = Config(proxy=None, timeout=10, verify=True, max_retries=1)
 
     mock_ddgs = MagicMock()
-    mock_ddgs.text.return_value = [{"title": "Type Safe Text"}]
+    mock_ddgs.text.return_value = [
+        TextSearchResult(
+            title="Type Safe Text",
+            url="https://test.com",
+            body="Test Body",
+        )
+    ]
     mock_ddgs_class.return_value.__enter__.return_value = mock_ddgs
 
     # Call _execute_search using a type-safe lambda closure
     res = _execute_search(mock_ctx, lambda adapter: adapter.text(query="test query"))
 
     # Verify result and call logic
-    assert res == [{"title": "Type Safe Text"}]
+    assert res == [
+        TextSearchResult(
+            title="Type Safe Text",
+            url="https://test.com",
+            body="Test Body",
+        )
+    ]
     mock_ddgs.text.assert_called_once_with(query="test query")
 
 
@@ -568,13 +592,13 @@ def test_print_table_news_no_truncation(capsys: pytest.CaptureFixture[str]) -> N
     from ddgo_search.formatting import print_table_news
 
     results = [
-        {
-            "date": "2026-06-18T00:00:00",
-            "title": "A very long news title that would have been truncated under the old logic but is now fully preserved and wrapped",
-            "source": "A very long source name",
-            "url": "https://a-very-long-url-path-that-needs-to-be-fully-printed-and-wrapped-without-any-ellipses-in-the-output-string.com/some/path",
-            "body": "A very long news body snippet that was previously truncated at 60 characters but is now fully wrapped and preserved to prevent any information loss.",
-        }
+        NewsSearchResult(
+            date="2026-06-18T00:00:00",
+            title="A very long news title that would have been truncated under the old logic but is now fully preserved and wrapped",
+            source="A very long source name",
+            url="https://a-very-long-url-path-that-needs-to-be-fully-printed-and-wrapped-without-any-ellipses-in-the-output-string.com/some/path",
+            body="A very long news body snippet that was previously truncated at 60 characters but is now fully wrapped and preserved to prevent any information loss.",
+        )
     ]
     print_table_news(results)
     captured = capsys.readouterr().out

@@ -456,7 +456,7 @@ def extract(
     """Fetch a URL and extract its main content with auto-retries and proxy rotation."""
 
     result = _execute_search(ctx, lambda ddgs: ddgs.extract(url=url, fmt=fmt.value))
-    content = result.get("content", "")
+    content = result.content
 
     # If bytes, decode or handle appropriately
     if isinstance(content, bytes):

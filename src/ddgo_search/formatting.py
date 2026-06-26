@@ -14,20 +14,30 @@ err_console = Console(stderr=True)
 
 def format_json(results: Any) -> str:
     """Format results as pretty printed JSON string."""
-    return json.dumps(results, indent=2, ensure_ascii=False)
+    from dataclasses import asdict, is_dataclass
+
+    serialized = results
+    if isinstance(results, list):
+        serialized = [asdict(r) if is_dataclass(r) else r for r in results]
+    elif is_dataclass(results):
+        serialized = asdict(results)
+    return json.dumps(serialized, indent=2, ensure_ascii=False)
 
 
-def format_csv(results: List[Dict[str, Any]]) -> str:
+def format_csv(results: List[Any]) -> str:
     """Format results as a CSV string."""
     if not results:
         return ""
 
+    from dataclasses import asdict, is_dataclass
+
+    dicts = [asdict(r) if is_dataclass(r) else r for r in results]
     output = io.StringIO()
     # Use keys from the first item as headers
-    headers = list(results[0].keys())
+    headers = list(dicts[0].keys())
     writer = csv.DictWriter(output, fieldnames=headers)
     writer.writeheader()
-    for row in results:
+    for row in dicts:
         writer.writerow(row)
     return output.getvalue()
 
@@ -74,7 +84,7 @@ def format_simple_table(
     return "\n".join(stripped_lines) + "\n"
 
 
-def print_table_text(results: List[Dict[str, Any]]) -> None:
+def print_table_text(results: List[Any]) -> None:
     """Print text search results in a space-saving ASCII Table."""
     headers = ["Index", "Title", "URL", "Snippet"]
     rows = []
@@ -82,52 +92,52 @@ def print_table_text(results: List[Dict[str, Any]]) -> None:
         rows.append(
             [
                 str(i),
-                res.get("title", "") or "",
-                res.get("url", "") or "",
-                res.get("body", "") or "",
+                res.title or "",
+                res.url or "",
+                res.body or "",
             ]
         )
     console.print(format_simple_table(headers, rows))
 
 
-def print_table_images(results: List[Dict[str, Any]]) -> None:
+def print_table_images(results: List[Any]) -> None:
     """Print image search results in a space-saving ASCII Table."""
     headers = ["Index", "Title", "Resolution", "Source", "Image URL"]
     rows = []
     for i, res in enumerate(results, 1):
-        w = res.get("width", "")
-        h = res.get("height", "")
+        w = res.width
+        h = res.height
         resolution = f"{w}x{h}" if w and h else "Unknown"
         rows.append(
             [
                 str(i),
-                res.get("title", "") or "",
+                res.title or "",
                 resolution,
-                res.get("source", "") or "",
-                res.get("url", "") or "",
+                res.source or "",
+                res.url or "",
             ]
         )
     console.print(format_simple_table(headers, rows))
 
 
-def print_table_news(results: List[Dict[str, Any]]) -> None:
+def print_table_news(results: List[Any]) -> None:
     """Print news search results in a space-saving ASCII Table."""
     headers = ["Date", "Title", "Source", "URL", "Snippet"]
     rows = []
     for res in results:
         rows.append(
             [
-                res.get("date", "") or "",
-                res.get("title", "") or "",
-                res.get("source", "") or "",
-                res.get("url", "") or "",
-                res.get("body", "") or "",
+                res.date or "",
+                res.title or "",
+                res.source or "",
+                res.url or "",
+                res.body or "",
             ]
         )
     console.print(format_simple_table(headers, rows))
 
 
-def print_table_videos(results: List[Dict[str, Any]]) -> None:
+def print_table_videos(results: List[Any]) -> None:
     """Print video search results in a space-saving ASCII Table."""
     headers = ["Index", "Title", "Duration", "Publisher", "Published", "URL"]
     rows = []
@@ -135,17 +145,17 @@ def print_table_videos(results: List[Dict[str, Any]]) -> None:
         rows.append(
             [
                 str(i),
-                res.get("title", "") or "",
-                res.get("duration", "") or "",
-                res.get("publisher", "") or "",
-                res.get("published", "") or "",
-                res.get("url", "") or "",
+                res.title or "",
+                res.duration or "",
+                res.publisher or "",
+                res.published or "",
+                res.url or "",
             ]
         )
     console.print(format_simple_table(headers, rows))
 
 
-def print_table_books(results: List[Dict[str, Any]]) -> None:
+def print_table_books(results: List[Any]) -> None:
     """Print book search results in a space-saving ASCII Table."""
     headers = ["Index", "Title", "Author", "Publisher", "Info", "URL"]
     rows = []
@@ -153,65 +163,63 @@ def print_table_books(results: List[Dict[str, Any]]) -> None:
         rows.append(
             [
                 str(i),
-                res.get("title", "") or "",
-                res.get("author", "") or "",
-                res.get("publisher", "") or "",
-                res.get("info", "") or "",
-                res.get("url", "") or "",
+                res.title or "",
+                res.author or "",
+                res.publisher or "",
+                res.info or "",
+                res.url or "",
             ]
         )
     console.print(format_simple_table(headers, rows))
 
 
-def print_plain_text(results: List[Dict[str, Any]]) -> None:
+def print_plain_text(results: List[Any]) -> None:
     """Print text search results as plain text."""
     for i, res in enumerate(results, 1):
-        console.print(f"[bold cyan]{i}. {res.get('title')}[/bold cyan]")
-        console.print(f"[blue]{res.get('url')}[/blue]")
-        console.print(f"{res.get('body')}\n")
+        console.print(f"[bold cyan]{i}. {res.title}[/bold cyan]")
+        console.print(f"[blue]{res.url}[/blue]")
+        console.print(f"{res.body}\n")
 
 
-def print_plain_images(results: List[Dict[str, Any]]) -> None:
+def print_plain_images(results: List[Any]) -> None:
     """Print image search results as plain text."""
     for i, res in enumerate(results, 1):
-        w = res.get("width", "")
-        h = res.get("height", "")
+        w = res.width
+        h = res.height
         resolution = f" ({w}x{h})" if w and h else ""
-        console.print(f"[bold cyan]{i}. {res.get('title')}{resolution}[/bold cyan]")
-        console.print(f"Source: {res.get('source')}")
-        console.print(f"Image: {res.get('url')}\n")
+        console.print(f"[bold cyan]{i}. {res.title}{resolution}[/bold cyan]")
+        console.print(f"Source: {res.source}")
+        console.print(f"Image: {res.url}\n")
 
 
-def print_plain_news(results: List[Dict[str, Any]]) -> None:
+def print_plain_news(results: List[Any]) -> None:
     """Print news search results as plain text."""
     for i, res in enumerate(results, 1):
-        date_str = f" [{res.get('date')}]" if res.get("date") else ""
-        console.print(f"[bold cyan]{i}. {res.get('title')}{date_str}[/bold cyan]")
-        console.print(f"Source: [yellow]{res.get('source')}[/yellow]")
-        console.print(f"URL: [blue]{res.get('url')}[/blue]")
-        console.print(f"{res.get('body')}\n")
+        date_str = f" [{res.date}]" if res.date else ""
+        console.print(f"[bold cyan]{i}. {res.title}{date_str}[/bold cyan]")
+        console.print(f"Source: [yellow]{res.source}[/yellow]")
+        console.print(f"URL: [blue]{res.url}[/blue]")
+        console.print(f"{res.body}\n")
 
 
-def print_plain_videos(results: List[Dict[str, Any]]) -> None:
+def print_plain_videos(results: List[Any]) -> None:
     """Print video search results as plain text."""
     for i, res in enumerate(results, 1):
-        dur = f" ({res.get('duration')})" if res.get("duration") else ""
-        console.print(f"[bold cyan]{i}. {res.get('title')}{dur}[/bold cyan]")
-        console.print(
-            f"Publisher: {res.get('publisher')} | Published: {res.get('published')}"
-        )
-        console.print(f"URL: [blue]{res.get('url')}[/blue]\n")
+        dur = f" ({res.duration})" if res.duration else ""
+        console.print(f"[bold cyan]{i}. {res.title}{dur}[/bold cyan]")
+        console.print(f"Publisher: {res.publisher} | Published: {res.published}")
+        console.print(f"URL: [blue]{res.url}[/blue]\n")
 
 
-def print_plain_books(results: List[Dict[str, Any]]) -> None:
+def print_plain_books(results: List[Any]) -> None:
     """Print book search results as plain text."""
     for i, res in enumerate(results, 1):
-        console.print(f"[bold cyan]{i}. {res.get('title')}[/bold cyan]")
+        console.print(f"[bold cyan]{i}. {res.title}[/bold cyan]")
         console.print(
-            f"Author: [magenta]{res.get('author')}[/magenta] | Publisher: {res.get('publisher')}"
+            f"Author: [magenta]{res.author}[/magenta] | Publisher: {res.publisher}"
         )
-        console.print(f"Info: {res.get('info')}")
-        console.print(f"URL: [blue]{res.get('url')}[/blue]\n")
+        console.print(f"Info: {res.info}")
+        console.print(f"URL: [blue]{res.url}[/blue]\n")
 
 
 def print_json(results: List[Any]) -> None:
@@ -219,7 +227,7 @@ def print_json(results: List[Any]) -> None:
     console.print(format_json(results))
 
 
-def print_csv(results: List[Dict[str, Any]]) -> None:
+def print_csv(results: List[Any]) -> None:
     """Print results as CSV."""
     sys.stdout.write(format_csv(results))
 
@@ -238,7 +246,7 @@ FORMATTER_REGISTRY: Dict[Tuple[str, str], Callable[[List[Any]], None]] = {
 }
 
 
-def display_results(results: List[Dict[str, Any]], category: str, fmt: str) -> None:
+def display_results(results: List[Any], category: str, fmt: str) -> None:
     """Display the results in the requested format using strategy lookup."""
     if fmt == "json":
         print_json(results)

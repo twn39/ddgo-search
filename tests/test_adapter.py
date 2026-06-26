@@ -52,9 +52,9 @@ def test_adapter_text_search(mock_ddgs_class: MagicMock) -> None:
         results = adapter.text(query="python")
 
         assert len(results) == 1
-        assert results[0]["title"] == "Test Title"
-        assert results[0]["url"] == "https://test.com/link"  # href mapped to url
-        assert results[0]["body"] == "Test Body"
+        assert results[0].title == "Test Title"
+        assert results[0].url == "https://test.com/link"  # href mapped to url
+        assert results[0].body == "Test Body"
         mock_ddgs.text.assert_called_once_with(
             query="python",
             region="us-en",
@@ -98,7 +98,7 @@ def test_adapter_extract_format_translation(mock_ddgs_class: MagicMock) -> None:
     with DDGSAdapter() as adapter:
         res = adapter.extract(url="https://example.com", fmt="markdown")
 
-        assert res["content"] == "hello"
+        assert res.content == "hello"
         mock_ddgs.extract.assert_called_once_with(
             url="https://example.com",
             fmt="text_markdown",  # Translated from markdown

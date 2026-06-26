@@ -241,7 +241,7 @@ def test_ddgs_adapter_fallback_to_lite() -> None:
 
             assert len(results) == 3
             for r in results:
-                assert "title" in r
-                assert "url" in r
-                assert "body" in r
-                assert r["url"].startswith("http")
+                assert r.title
+                assert r.url
+                assert r.body
+                assert r.url.startswith("http")

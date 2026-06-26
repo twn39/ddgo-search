@@ -60,11 +60,11 @@ class PrimaryTextSearchEngine:
         results: List[TextSearchResult] = []
         for r in raw_results or []:
             results.append(
-                {
-                    "title": r.get("title", ""),
-                    "url": r.get("href", ""),
-                    "body": r.get("body", ""),
-                }
+                TextSearchResult(
+                    title=r.get("title", ""),
+                    url=r.get("href", ""),
+                    body=r.get("body", ""),
+                )
             )
         return results
 
@@ -107,11 +107,11 @@ class FallbackTextSearchEngine:
         results: List[TextSearchResult] = []
         for r in fallback_results:
             results.append(
-                {
-                    "title": r.get("title", ""),
-                    "url": r.get("url", ""),
-                    "body": r.get("body", ""),
-                }
+                TextSearchResult(
+                    title=r.get("title", ""),
+                    url=r.get("url", ""),
+                    body=r.get("body", ""),
+                )
             )
         return results
 

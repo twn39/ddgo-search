@@ -1,6 +1,7 @@
 """Adapter layer for the ddgs (DuckDuckGo Search) library to shield ddgo-search from SDK API changes."""
 
-from typing import Any, Callable, List, Optional, TypedDict
+from dataclasses import dataclass
+from typing import Any, Callable, List, Optional
 
 from ddgs import DDGS
 from ddgs.exceptions import DDGSException, TimeoutException
@@ -8,7 +9,8 @@ from ddgs.exceptions import DDGSException, TimeoutException
 from .exceptions import SearchError, SearchTimeoutError
 
 
-class TextSearchResult(TypedDict):
+@dataclass(frozen=True, slots=True)
+class TextSearchResult:
     """Normalized DTO for text search results."""
 
     title: str
@@ -16,17 +18,19 @@ class TextSearchResult(TypedDict):
     body: str
 
 
-class ImageSearchResult(TypedDict):
+@dataclass(frozen=True, slots=True)
+class ImageSearchResult:
     """Normalized DTO for image search results."""
 
     title: str
     url: str
     source: str
-    width: Optional[int]
-    height: Optional[int]
+    width: Optional[int] = None
+    height: Optional[int] = None
 
 
-class VideoSearchResult(TypedDict):
+@dataclass(frozen=True, slots=True)
+class VideoSearchResult:
     """Normalized DTO for video search results."""
 
     title: str
@@ -36,7 +40,8 @@ class VideoSearchResult(TypedDict):
     url: str
 
 
-class NewsSearchResult(TypedDict):
+@dataclass(frozen=True, slots=True)
+class NewsSearchResult:
     """Normalized DTO for news search results."""
 
     date: str
@@ -46,7 +51,8 @@ class NewsSearchResult(TypedDict):
     body: str
 
 
-class BookSearchResult(TypedDict):
+@dataclass(frozen=True, slots=True)
+class BookSearchResult:
     """Normalized DTO for book search results."""
 
     title: str
@@ -56,7 +62,8 @@ class BookSearchResult(TypedDict):
     url: str
 
 
-class ExtractResult(TypedDict):
+@dataclass(frozen=True, slots=True)
+class ExtractResult:
     """Normalized DTO for extracted webpage content."""
 
     url: str
@@ -186,13 +193,13 @@ class DDGSAdapter:
         results: List[ImageSearchResult] = []
         for r in raw_results or []:
             results.append(
-                {
-                    "title": r.get("title", ""),
-                    "url": r.get("image", ""),
-                    "source": r.get("source", ""),
-                    "width": r.get("width"),
-                    "height": r.get("height"),
-                }
+                ImageSearchResult(
+                    title=r.get("title", ""),
+                    url=r.get("image", ""),
+                    source=r.get("source", ""),
+                    width=r.get("width"),
+                    height=r.get("height"),
+                )
             )
         return results
 
@@ -234,13 +241,13 @@ class DDGSAdapter:
         results: List[VideoSearchResult] = []
         for r in raw_results or []:
             results.append(
-                {
-                    "title": r.get("title", ""),
-                    "duration": r.get("duration", ""),
-                    "publisher": r.get("publisher", ""),
-                    "published": r.get("published", ""),
-                    "url": r.get("embed_url", r.get("url", "")),
-                }
+                VideoSearchResult(
+                    title=r.get("title", ""),
+                    duration=r.get("duration", ""),
+                    publisher=r.get("publisher", ""),
+                    published=r.get("published", ""),
+                    url=r.get("embed_url", r.get("url", "")),
+                )
             )
         return results
 
@@ -276,13 +283,13 @@ class DDGSAdapter:
         results: List[NewsSearchResult] = []
         for r in raw_results or []:
             results.append(
-                {
-                    "date": r.get("date", ""),
-                    "title": r.get("title", ""),
-                    "source": r.get("source", ""),
-                    "url": r.get("url", ""),
-                    "body": r.get("body", ""),
-                }
+                NewsSearchResult(
+                    date=r.get("date", ""),
+                    title=r.get("title", ""),
+                    source=r.get("source", ""),
+                    url=r.get("url", ""),
+                    body=r.get("body", ""),
+                )
             )
         return results
 
@@ -312,13 +319,13 @@ class DDGSAdapter:
         results: List[BookSearchResult] = []
         for r in raw_results or []:
             results.append(
-                {
-                    "title": r.get("title", ""),
-                    "author": r.get("author", ""),
-                    "publisher": r.get("publisher", ""),
-                    "info": r.get("info", ""),
-                    "url": r.get("url", ""),
-                }
+                BookSearchResult(
+                    title=r.get("title", ""),
+                    author=r.get("author", ""),
+                    publisher=r.get("publisher", ""),
+                    info=r.get("info", ""),
+                    url=r.get("url", ""),
+                )
             )
         return results
 
@@ -352,7 +359,7 @@ class DDGSAdapter:
             )
 
         r = self._run_with_exception_mapping(run)
-        return {
-            "url": r.get("url", url),
-            "content": r.get("content", ""),
-        }
+        return ExtractResult(
+            url=r.get("url", url),
+            content=r.get("content", ""),
+        )
