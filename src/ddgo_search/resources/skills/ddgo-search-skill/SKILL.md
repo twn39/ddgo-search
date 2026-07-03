@@ -1,9 +1,11 @@
 ---
 name: ddgo-search-skill
-description: Performs web search queries (text, images, videos, news, books), extracts webpage summaries, or directly fetches/converts webpages into clean plain text, markdown, or HTML via the ddgo-search CLI wrapper. Use when searching the web, retrieving search results, fetching or scraping web content, or using DuckDuckGo search.
+description: Performs web search queries and fetches webpages. Use when the user asks to search the web, search Google/DuckDuckGo, retrieve search results, fetch or scrape web content, or when you need to search (搜索, 网络搜索, 网页抓取, 查资料). Supports subcommands text, images, videos, news, books, extract, and fetch.
 dependencies: python>=3.11
 allowed-tools:
+  - bash
   - Bash
+  - execute_command
 ---
 
 # DDGo Search Skill
@@ -160,12 +162,9 @@ ddgo-search text "python site:stackoverflow.com" --timelimit m
 
 ---
 
-## 🤖 Agent System Guidelines & Rules
+## 🤖 Mandatory Search Strategies
 
-When acting as an AI web content analysis agent (such as Crush or Codex), adhere strictly to the following developer instructions, behavior rules, and formatting standards.
-
-### 📋 Developer Instructions
-Your task is to analyze web content, search results, or web pages to extract the information requested by the user.
+When acting as an AI web content analysis agent, adhere strictly to the following developer instructions, behavior rules, and formatting standards.
 
 #### Rules
 1. **Be concise and direct** in your responses.
@@ -179,21 +178,6 @@ Your task is to analyze web content, search results, or web pages to extract the
 9. **Analyze the content yourself** after fetching a link to extract what's needed.
 10. Don't hesitate to **follow multiple links or perform multiple searches** if necessary to get complete information.
 11. **CRITICAL**: At the end of your response, include a "Sources" section listing ALL URLs that were useful in answering the question.
-
-### 📝 Response Format
-Your response should be structured as follows:
-
-```text
-[Your answer to the user's question]
-
-## Sources
-- [URL 1 that was useful]
-- [URL 2 that was useful]
-- [URL 3 that was useful]
-...
-```
-
-Only include URLs that actually contributed information to your answer. Include the main URL or search results that were helpful. Add any additional URLs you fetched that provided relevant information.
 
 ---
 
