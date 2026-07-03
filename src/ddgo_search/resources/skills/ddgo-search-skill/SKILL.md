@@ -164,22 +164,32 @@ ddgo-search text "python site:stackoverflow.com" --timelimit m
 
 ## 🤖 Mandatory Search Strategies
 
-When acting as an AI web content analysis agent, adhere strictly to the following developer instructions, behavior rules, and formatting standards.
+When acting as an AI web content analysis agent, adhere strictly to the following developer instructions, behavior rules, and formatting standards. **These rules are mandatory and override general brevity guidelines when deep research or synthesis is required.**
 
-#### Rules
-1. **Be concise and direct** in your responses.
-2. **Focus only on the information requested** in the user's prompt.
-3. If the content is provided in a file path, **use the grep and view tools** to efficiently search through it.
-4. When relevant, **quote specific sections** from the content to support your answer.
-5. If the requested information is not found, **clearly state that**.
-6. Any file paths you use **MUST be absolute**.
-7. **IMPORTANT**: If you need information from a linked page or search result, run the `ddgo-search fetch` command via the Bash tool to retrieve the content.
-8. **IMPORTANT**: If you need to search for more information, run the `ddgo-search text` command via the Bash tool.
-9. **Analyze the content yourself** after fetching a link to extract what's needed.
-10. Don't hesitate to **follow multiple links or perform multiple searches** if necessary to get complete information.
-11. **CRITICAL**: At the end of your response, include a "Sources" section listing ALL URLs that were useful in answering the question.
+### 1. Multi-Turn Search & Fetch Pipeline (Mandatory Rules)
+*   **No Single-Query Answers**: For any non-trivial, analytical, or fact-checking question, you **MUST** perform at least **4 to 6 distinct search queries** using different keywords or targeting different aspects to ensure comprehensive coverage.
+*   **Deep Reading (Mandatory Fetching)**: Never rely solely on the snippets or summaries returned in the `text` command. You **MUST** use `ddgo-search fetch <URL>` to retrieve and analyze the full content of at least **2 to 3 high-quality, independent sources**.
+*   **Iterative Refinement**: Analyze the results of your first search. If the information is incomplete, outdated, or lacks depth, you **MUST** formulate a follow-up query focusing on the missing details (e.g., adding years, specifying error messages, or querying official documentation).
+*   **Cross-Verification**: If sources present conflicting information, do not pick one arbitrarily. Fetch additional sources to resolve the conflict, or explicitly present the different viewpoints, analysis, and their respective sources.
+*   **Any absolute file paths**: If referencing or saving output to files on disk, you **MUST** use absolute paths.
 
----
+### 2. Execution Workflow for Agents
+When a query is received:
+1.  **Formulate a Search Plan**: Mentally or briefly in your thinking, break down the user's prompt into 4-6 sub-queries targeting different aspects (e.g., core concept, comparison, latest updates/issues).
+2.  **First-Pass Search**: Run `ddgo-search text` for your primary query.
+3.  **Identify Key Sources**: Scan the titles and snippets. Select the top 2-3 most promising URLs.
+4.  **Fetch & Read**: Run `ddgo-search fetch` on those URLs. Extract the exact sections, APIs, or numbers needed.
+5.  **Second-Pass Refinement**: Run a secondary `ddgo-search text` to fill in gaps found during step 4 (e.g., searching for a specific configuration option mentioned in the fetched article).
+6.  **Synthesize**: Combine, cross-reference, and structure your findings. Keep your explanation precise but comprehensive.
+
+### 3. Output Formatting & Sources
+*   **Analyze Yourself**: Do not just quote paragraphs blindly. Synthesize the core insights, contrast different approaches, and write a cohesive answer.
+*   **Provide Quotes**: When making a critical or surprising claim, quote the relevant line from the fetched source.
+*   **Mandatory Sources Section**: At the end of your response, you **MUST** include a `**Sources**` section listing all URLs that were fetched and contributed to the answer. Format them cleanly as:
+    ```markdown
+    **Sources**
+    - [Source Title](URL) - Key takeaway or context from this source.
+    ```
 
 ## 💡 Best Practices & Search Strategies for Agents
 
