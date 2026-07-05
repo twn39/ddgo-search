@@ -608,3 +608,106 @@ def test_print_table_news_no_truncation(capsys: pytest.CaptureFixture[str]) -> N
     assert "previously" in captured
     assert "truncated" in captured
     assert "ellipses" in captured
+
+
+def test_cli_config_file_explicit_not_found() -> None:
+    """Test specifying a config file that does not exist."""
+    result = runner.invoke(app, ["--config", "nonexistent_file.toml", "text", "query"])
+    assert result.exit_code == 1
+    output = result.stdout + getattr(result, "stderr", "")
+    assert "Error: Configuration file not found at nonexistent_file.toml" in output
+
+
+@patch("ddgo_search.cli.DDGSAdapter")
+def test_cli_config_file_explicit_toml(mock_ddgs_class: MagicMock, tmp_path: Path) -> None:
+    """Test loading proxy from an explicitly specified TOML config file."""
+    config_file = tmp_path / "config.toml"
+    config_file.write_text('proxy = "http://explicit-proxy:8080"\n', encoding="utf-8")
+
+    mock_ddgs = MagicMock()
+    mock_ddgs.text.return_value = []
+    mock_ddgs_class.return_value.__enter__.return_value = mock_ddgs
+
+    result = runner.invoke(app, ["--config", str(config_file), "text", "query"])
+    assert result.exit_code == 0
+
+    # Verify that DDGSAdapter was initialized with the proxy from the config file
+    mock_ddgs_class.assert_called_once_with(
+        proxy="http://explicit-proxy:8080",
+        timeout=10,
+        verify=True
+    )
+
+
+@patch("ddgo_search.cli.DDGSAdapter")
+def test_cli_config_file_settings_table(mock_ddgs_class: MagicMock, tmp_path: Path) -> None:
+    """Test loading proxy from a TOML config file with a [settings] section."""
+    config_file = tmp_path / "config.toml"
+    config_file.write_text('[settings]\nproxy = "http://settings-proxy:8080"\n', encoding="utf-8")
+
+    mock_ddgs = MagicMock()
+    mock_ddgs.text.return_value = []
+    mock_ddgs_class.return_value.__enter__.return_value = mock_ddgs
+
+    result = runner.invoke(app, ["--config", str(config_file), "text", "query"])
+    assert result.exit_code == 0
+    mock_ddgs_class.assert_called_once_with(
+        proxy="http://settings-proxy:8080",
+        timeout=10,
+        verify=True
+    )
+
+
+@patch("ddgo_search.cli.get_default_config_path")
+@patch("ddgo_search.cli.DDGSAdapter")
+def test_cli_config_file_default_path(mock_ddgs_class: MagicMock, mock_get_path: MagicMock, tmp_path: Path) -> None:
+    """Test that the default user directory config path (~/.ddgo-search.toml) is checked."""
+    config_file = tmp_path / ".ddgo-search.toml"
+    config_file.write_text('proxy = "http://default-path-proxy:8080"\n', encoding="utf-8")
+    mock_get_path.return_value = config_file
+
+    mock_ddgs = MagicMock()
+    mock_ddgs.text.return_value = []
+    mock_ddgs_class.return_value.__enter__.return_value = mock_ddgs
+
+    result = runner.invoke(app, ["text", "query"])
+    assert result.exit_code == 0
+    mock_ddgs_class.assert_called_once_with(
+        proxy="http://default-path-proxy:8080",
+        timeout=10,
+        verify=True
+    )
+
+
+@patch("ddgo_search.cli.DDGSAdapter")
+def test_cli_config_precedence(mock_ddgs_class: MagicMock, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test proxy resolution precedence: CLI option > environment variable > config file."""
+    config_file = tmp_path / "config.toml"
+    config_file.write_text('proxy = "http://config-proxy:8080"\n', encoding="utf-8")
+
+    mock_ddgs = MagicMock()
+    mock_ddgs.text.return_value = []
+    mock_ddgs_class.return_value.__enter__.return_value = mock_ddgs
+
+    # Scenario 1: Config file present, but env var set. Env var should win.
+    monkeypatch.setenv("DDGS_PROXY", "http://env-proxy:8080")
+    result = runner.invoke(app, ["--config", str(config_file), "text", "query"])
+    assert result.exit_code == 0
+    mock_ddgs_class.assert_called_with(
+        proxy="http://env-proxy:8080",
+        timeout=10,
+        verify=True
+    )
+
+    # Scenario 2: Config file present, env var set, and CLI option provided. CLI option should win.
+    result = runner.invoke(
+        app,
+        ["--config", str(config_file), "--proxy", "http://cli-proxy:8080", "text", "query"]
+    )
+    assert result.exit_code == 0
+    mock_ddgs_class.assert_called_with(
+        proxy="http://cli-proxy:8080",
+        timeout=10,
+        verify=True
+    )
+

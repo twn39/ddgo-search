@@ -1,6 +1,7 @@
 """Main Typer CLI application for ddgo-search."""
 
 from enum import Enum
+import os
 from pathlib import Path
 from typing import Any, Callable, Optional
 
@@ -14,6 +15,8 @@ from .utils import (
     clean_markdown,
     execute_with_retry,
     fetch_url,
+    get_default_config_path,
+    load_config_file,
     parse_proxies,
 )
 
@@ -139,6 +142,12 @@ def main_callback(
         is_eager=True,
         help="Show the version and exit.",
     ),
+    config_file: Optional[Path] = typer.Option(
+        None,
+        "--config",
+        "-c",
+        help="Path to the TOML configuration file (defaults to ~/.ddgo-search.toml).",
+    ),
     proxy: Optional[str] = typer.Option(
         None,
         "--proxy",
@@ -164,8 +173,22 @@ def main_callback(
     ),
 ) -> None:
     """DuckDuckGo Search CLI wrapper using ddgs library."""
+    config_data = {}
+    if config_file:
+        if not config_file.exists():
+            typer.secho(f"Error: Configuration file not found at {config_file}", fg=typer.colors.RED, err=True)
+            raise typer.Exit(code=1)
+        config_data = load_config_file(config_file)
+    else:
+        default_path = get_default_config_path()
+        if default_path.exists():
+            config_data = load_config_file(default_path)
+
+    # Precedence: CLI option > environment variable > config file
+    resolved_proxy = proxy or os.environ.get("DDGS_PROXY") or config_data.get("proxy")
+
     ctx.obj = Config(
-        proxy=proxy, timeout=timeout, verify=verify, max_retries=max_retries
+        proxy=resolved_proxy, timeout=timeout, verify=verify, max_retries=max_retries
     )
 
 
