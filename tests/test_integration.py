@@ -22,10 +22,11 @@ from ddgo_search.utils import ensure_rate_limit, parse_proxies  # noqa: E402
 
 @pytest.fixture(autouse=True)
 def clean_env_proxies(monkeypatch) -> Generator[None, None, None]:
-    """Ensure proxy environment variables and system settings do not interfere with local integration tests."""
+    """Ensure proxy environment variables, system settings, and user config files do not interfere with local integration tests."""
     import urllib.request
 
     monkeypatch.setattr(urllib.request, "getproxies", lambda: dict[str, str]())
+    monkeypatch.setattr("ddgo_search.cli.load_config_file", lambda path=None: {})
 
     old_env = {}
     proxy_vars = [
